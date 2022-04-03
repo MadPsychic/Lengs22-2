@@ -1,6 +1,22 @@
 module EAB where
+type Variable = String
 
-data EAB = Exp -- Definir la sintaxis abstracta de nuestro lenguaje EAB
+
+data EAB = Var Variable
+         | Num Int 
+         | B Bool 
+         | Sum EAB EAB
+         | Prod EAB EAB
+         | Neg EAB
+         | Pred EAB
+         | Suc EAB
+         | And EAB EAB
+         | Or EAB EAB
+         | Not EAB
+         | Iszero EAB
+         | Let EAB EAB
+         | If EAB EAB EAB 
+         | Abs Variable EAB deriving (Show, Eq)
 
 eval1 :: EAB -> EAB
 eval1 _ = error "Implementar"
@@ -18,4 +34,4 @@ vt :: Ctx -> EAB -> Type -> Bool
 vt _ _ _ = error "Implementar"
 
 evalt :: EAB -> EAB
-evalt _ = error "Implementar"
+evalt _ = error "Implementar"           
