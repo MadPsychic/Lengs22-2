@@ -60,7 +60,15 @@ evals (Num n) = (Num n)
 evals (B b) = (B b)
 evals (Sum e1 e2) = eval1(Sum (evals(e1)) (evals(e2)))
 evals (Prod e1 e2) = eval1(Prod (evals(e1)) (evals(e2)))
--- TODO complete
+evals (Neg e) = eval1(Neg (evals(e)))
+evals (Suc e) = eval1(Suc (evals(e)))
+evals (Pred e) = eval1(Pred (evals(e)))
+evals (Not e) = eval1(Not (evals(e)))
+evals (And e t) = eval1(And (evals(e)) (evals(t)))
+evals (Or e t) = eval1(Or (evals(e)) (evals(t)))
+evals (If t1 t2 t3) = eval1(If (evals(t1)) (evals(t2)) (evals(t3)))
+evals (Iszero e) = eval1(Iszero (evals(e)))
+-- TODO faltan Let y Abs
 
 eval :: EAB -> EAB
 eval _ = error "Implementar"
