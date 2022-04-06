@@ -299,7 +299,56 @@ vt a e t = False
 
 
 evalt :: EAB -> EAB
-evalt _ = error "Implementar"           
+evalt (Var a) = error "Variable libre"
+evalt (Num a) = Num a 
+evalt (B a) = B a
+
+evalt (Sum (Num a) (Num b)) = Num (a+b)
+evalt (Sum (Num a) (Var b)) = error "Existe una variable libre"
+evalt (Sum (Var a) (Num b)) = error "Existencia de variable libre"
+evalt (Sum (Num a)(B b)) = error "Error de tipo"
+evalt (Sum (B a)(Num b)) = error "Error de tipo"
+evalt (Sum (B a) (B b)) = error "No se puede realizar sumar"
+evalt (Sum a b) = error "Error de tipado"
+
+evalt (Prod (Num a) (Num b)) = Num (a*b)
+evalt (Prod (Num a) (Var b)) = error "Existe una variable libre"
+evalt (Prod (Var a) (Num b)) = error "Existencia de variable libre"
+evalt (Prod (Num a)(B b)) = error "Error de tipo"
+evalt (Prod (B a)(Num b)) = error "Error de tipo" 
+evalt (Prod (B a) (B b)) = error "No se puede realizar sumar"
+evalt (Prod a b) = error "Error de tipado"
+
+evalt (Neg (B True)) = Neg (B False)
+evalt (Neg (B False)) = Neg (B True)
+evalt (Neg (Var a)) = error "Variable libre"
+evalt (Neg (Num a)) = error "Error de tipo"
+evalt (Neg a) = error "Error de tipado"
+
+evalt (Pred (Num a)) | a < 1 = error "No se puede realizar"
+                     | otherwise = Num (a-1)
+evalt (Pred (Var a)) = error "Error de tipo"
+evalt (Pred (B a)) = error "Error de tipo"
 
 
+evalt (Suc (Num a)) |  a >= 0  = Num(a +1)
+                     | otherwise = error "No se puede realizar"
+evalt (Suc (Var a)) = error "Error de tipo"
+evalt (Suc (B a)) = error "Error de tipo"
+
+evalt (And (B True)(B True)) = B True 
+evalt (And (B False)(B True)) = B False  
+evalt (And (B True)(B False)) = B False 
+evalt (And (B False)(B False)) = B False  
+evalt (And a b) = error "Error de tipado"
+
+evalt (Or (B True)(B True)) = B True 
+evalt (Or (B False)(B True)) = B True   
+evalt (Or (B True)(B False)) = B True  
+evalt (Or (B False)(B False)) = B False  
+evalt (Or a b) = error "Error de tipado"
+
+evalt (Iszero (Num a)) | a == 0 = B True  
+                       | a /= 0 = B False
+                       | otherwise = error "Error de tipado"
 
