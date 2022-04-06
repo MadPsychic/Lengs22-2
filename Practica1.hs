@@ -17,6 +17,46 @@ data EAB = Var Variable
          | If EAB EAB EAB
          | Abs Variable EAB deriving (Show, Eq)
 
+type Subst = (Variable,EAB)
+
+fv :: EAB -> [Variable]
+fv (Var v) = [v]
+fv (Num _) = []
+fv (B _) = []
+fv (Sum a1 a2) = fv a1 ++ fv a2
+fv (Prod a1 a2) = fv a1 ++ fv a2
+fv (Neg e) = fv e
+fv (Pred e) = fv e
+fv (Suc e) = fv e
+fv (And e t) = fv e ++ fv t
+fv (Or e t) = fv e ++ fv t
+fv (Not e) = fv e
+fv (Iszero e) = fv e
+fv (If t1 t2 t3) = fv t1 ++ fv t2 ++ fv t3
+fv (Let a1 a2) = fv a1 ++ fv a2
+fv (Abs x a1) = filter (/= x) (fv a1)
+
+subs :: EAB -> Subst -> EAB
+subs (Var v) (x,e) = if v == x
+                     then e
+                     else (Var v)
+subs (Num n) _ = Num n
+subs (B b) _ = B b
+subs (Sum a1 a2) s = Sum (subs a1 s) (subs a2 s)
+subs (Prod a1 a2) s = Prod (subs a1 s) (subs a2 s)
+subs (Neg e) s = Neg (subs e s)
+subs (Pred e) s = Pred (subs e s)
+subs (Suc e) s = Suc (subs e s)
+subs (And e t) s = And (subs e s) (subs t s)
+subs (Or e t) s = Or (subs e s) (subs t s)
+subs (Not e) s = Not (subs e s)
+subs (Iszero e) s = Iszero (subs e s)
+subs (If t1 t2 t3) s = If (subs t1 s) (subs t2 s) (subs t3 s)
+subs (Let a1 a2) s = Let (subs a1 s) (subs a2 s)
+subs (Abs z e) s@(x,r)
+  | z == x || elem z (fv r) = error "TODO"
+  | otherwise = Abs z (subs e s)
+
 eval1 :: EAB -> EAB
 eval1 (Var v) = error "Variable libre"
 eval1 (Num n) = (Num n)
@@ -50,12 +90,12 @@ eval1 (If t1 t2 t3) = (If (eval1(t1)) t2 t3)
 eval1 (Iszero (Num 0)) = (B True)
 eval1 (Iszero (Num n)) = (B False)
 eval1 (Iszero t) = (Iszero (eval1(t)))
--- eval1 Let (Num n) t = sustitucion ?
+eval1 (Let (B b) (Abs x e)) = (subs e (x,(B b)))
+eval1 (Let (Num n) (Abs x e)) = (subs e (x,(Num n)))
 eval1 (Let t1 t2) = (Let (eval1(t1)) t2)
--- TODO faltan para Abs
 
 evals :: EAB -> EAB
-evals (Var v) = error "Variable libre"
+evals (Var v) = (Var v)
 evals (Num n) = (Num n)
 evals (B b) = (B b)
 evals (Sum e1 e2) = eval1(Sum (evals(e1)) (evals(e2)))
@@ -69,9 +109,23 @@ evals (Or e t) = eval1(Or (evals(e)) (evals(t)))
 evals (If t1 t2 t3) = eval1(If (evals(t1)) (evals(t2)) (evals(t3)))
 evals (Iszero e) = eval1(Iszero (evals(e)))
 -- TODO faltan Let y Abs
+-- No va a funcionar porque no debe haber errores de ejecución
 
 eval :: EAB -> EAB
-eval _ = error "Implementar"
+eval (Var v) = error "Variable libre"
+eval (Num n) = (Num n)
+eval (B b) = (B b)
+eval (Sum e1 e2) = eval1(Sum (eval(e1)) (eval(e2)))
+eval (Prod e1 e2) = eval1(Prod (eval(e1)) (eval(e2)))
+eval (Neg e) = eval1(Neg (eval(e)))
+eval (Suc e) = eval1(Suc (eval(e)))
+eval (Pred e) = eval1(Pred (eval(e)))
+eval (Not e) = eval1(Not (eval(e)))
+eval (And e t) = eval1(And (eval(e)) (eval(t)))
+eval (Or e t) = eval1(Or (eval(e)) (eval(t)))
+eval (If t1 t2 t3) = eval1(If (eval(t1)) (eval(t2)) (eval(t3)))
+eval (Iszero e) = eval1(Iszero (eval(e)))
+-- TODO revisar, faltan Let y Abs
 
 data Type = () -- Definir los tipos de EAB
 type Ctx = () -- Definir un sinomo para los contextos
