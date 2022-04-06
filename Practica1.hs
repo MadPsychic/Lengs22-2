@@ -1,6 +1,5 @@
 module EAB where
 
-
 type Variable = String
 
 data EAB = Var Variable
@@ -58,6 +57,8 @@ subs (Let a1 a2) s = Let (subs a1 s) (subs a2 s)
 subs (Abs z e) s@(x,r)
   | z == x || elem z (fv r) = error "Se requiere una equivalencia"
   | otherwise = Abs z (subs e s)
+
+-- ****************** Semántica Dinámica ***********************
 
 eval1 :: EAB -> EAB
 eval1 (Var v) = (Var v)
@@ -175,66 +176,66 @@ eval (Let e (Abs x t)) = if fv (Let e (Abs x t)) /= []
 eval e = error "Expresión mal formada"
 
 -- ****************** Semantica Estatica ***********************
-data Type = TBool 
+data Type = TBool
           | TNat  deriving (Eq,Show)        -- Definir los tipos de EAB
 
 
 type Ctx = [(Variable, Type)] -- Definir un sinomo para los contextos
 
 
-tnum :: EAB -> Type -> Bool 
-tnum (Num a) (TNat) = True 
+tnum :: EAB -> Type -> Bool
+tnum (Num a) (TNat) = True
 tnum a b = False
 
-tbool :: EAB -> Type -> Bool 
-tbool (B a) (TBool) = True 
+tbool :: EAB -> Type -> Bool
+tbool (B a) (TBool) = True
 tbool a b = False
 
-tnot :: EAB -> Type -> Bool 
-tnot (Not a) (TBool) | tbool a TBool = True 
-                     | otherwise = False 
-tnot a b = False 
+tnot :: EAB -> Type -> Bool
+tnot (Not a) (TBool) | tbool a TBool = True
+                     | otherwise = False
+tnot a b = False
 
-ttrue :: EAB -> Type -> Bool 
-ttrue (B True) (TBool) = True 
-ttrue a b = False 
+ttrue :: EAB -> Type -> Bool
+ttrue (B True) (TBool) = True
+ttrue a b = False
 
-tfalse :: EAB -> Type -> Bool 
-tfalse (B False) TBool = True 
+tfalse :: EAB -> Type -> Bool
+tfalse (B False) TBool = True
 tfalse a b = False
 
-tsum :: EAB -> Type -> Bool 
-tsum (Sum a b) (TNat) | tnum a TNat && tnum b TNat = True 
-                      | otherwise = False 
+tsum :: EAB -> Type -> Bool
+tsum (Sum a b) (TNat) | tnum a TNat && tnum b TNat = True
+                      | otherwise = False
 tsum a b = False
 
-tprod :: EAB -> Type -> Bool 
-tprod (Prod a b) (TNat) | tnum a TNat && tnum b TNat = True 
-                        | otherwise = False 
+tprod :: EAB -> Type -> Bool
+tprod (Prod a b) (TNat) | tnum a TNat && tnum b TNat = True
+                        | otherwise = False
 tprod a b = False
 
-tsuc :: EAB -> Type -> Bool 
-tsuc (Suc a) (TNat) | tnum a (TNat) = True 
-                    | otherwise = False 
+tsuc :: EAB -> Type -> Bool
+tsuc (Suc a) (TNat) | tnum a (TNat) = True
+                    | otherwise = False
 tsuc a b = False
 
 
-tpred :: EAB -> Type -> Bool 
-tpred (Pred a) (TNat) | tnum a (TNat) = True 
-                    | otherwise = False 
+tpred :: EAB -> Type -> Bool
+tpred (Pred a) (TNat) | tnum a (TNat) = True
+                      | otherwise = False
 tpred a b = False
 
-tand :: EAB -> Type -> Bool 
-tand (And a b) (TBool) | (ttrue a (TBool)) && (ttrue b TBool) = True 
-                       | otherwise  = False 
-tand a b = False 
+tand :: EAB -> Type -> Bool
+tand (And a b) (TBool) | (ttrue a (TBool)) && (ttrue b TBool) = True
+                       | otherwise  = False
+tand a b = False
 
-tor :: EAB -> Type -> Bool 
+tor :: EAB -> Type -> Bool
 tor (Or a b) (TBool) | (ttrue a TBool) && (ttrue b TBool) = True
                      | ttrue a TBool && tfalse b TBool = True 
                      | tfalse a TBool && ttrue b TBool = True 
                      | otherwise  = False 
-tor a b = False 
+tor a b = False
 
 tisz :: EAB -> Type -> Bool 
 tisz (Iszero a) (TNat) | tnum (Num 0) (TNat) = True 
