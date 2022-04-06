@@ -109,23 +109,68 @@ evals (Or e t) = eval1(Or (evals(e)) (evals(t)))
 evals (If t1 t2 t3) = eval1(If (evals(t1)) (evals(t2)) (evals(t3)))
 evals (Iszero e) = eval1(Iszero (evals(e)))
 evals (Let e t) = eval1(Let (evals(e)) (evals(t)))
+evals (Abs x e) = (Abs x e)
+
+isNum :: EAB -> Bool
+isNum (Num n) = True
+isNum _ = False
+
+hasBool :: EAB -> Bool
+hasBool (B _) = True
+hasBool (Var v) = False
+hasBool (Num n) = False
+hasBool (Iszero (Num n)) = True
+hasBool (Iszero e) = isNum(evals e)
+hasBool (Sum e t) = hasBool(evals e) || hasBool(evals t)
+hasBool (Prod e t) = hasBool(evals e) || hasBool(evals t)
+hasBool (Neg e) = hasBool(evals e)
+hasBool  (Suc e) = hasBool(evals e)
+hasBool (Pred e) = hasBool(evals e)
+hasBool (Not e) = hasBool(evals e)
+hasBool (And e t) = hasBool(evals e) || hasBool(evals t)
+hasBool (Or e t) = hasBool(evals e) || hasBool(evals t)
+hasBool (If t1 t2 t3) =  hasBool(evals(t1)) || hasBool(evals(t2)) || hasBool(evals(t3))
+hasBool (Let e t) = hasBool(evals e) || hasBool(evals t)
+hasBool (Abs x e) = hasBool(evals e)
 
 eval :: EAB -> EAB
 eval (Var v) = error "Variable libre"
 eval (Num n) = (Num n)
 eval (B b) = (B b)
-eval (Sum e1 e2) = eval1(Sum (eval(e1)) (eval(e2)))
-eval (Prod e1 e2) = eval1(Prod (eval(e1)) (eval(e2)))
-eval (Neg e) = eval1(Neg (eval(e)))
-eval (Suc e) = eval1(Suc (eval(e)))
-eval (Pred e) = eval1(Pred (eval(e)))
-eval (Not e) = eval1(Not (eval(e)))
-eval (And e t) = eval1(And (eval(e)) (eval(t)))
-eval (Or e t) = eval1(Or (eval(e)) (eval(t)))
-eval (If t1 t2 t3) = eval1(If (eval(t1)) (eval(t2)) (eval(t3)))
-eval (Iszero e) = eval1(Iszero (eval(e)))
-eval (Let e t) = eval1(Let (evals(e)) (evals(t)))
--- TODO debe devolver error para expresiones que no se pueden interpretar
+eval (Sum e t) = if (fv (Sum e t) /= [] || hasBool(e) || hasBool(t))
+                 then error "Variable libre o bool en suma"
+                 else (evals (Sum e t))
+eval (Prod e t) = if (fv (Prod e t) /= [] || hasBool(e) || hasBool(t))
+                  then error "Variable libre o bool en producto"
+                  else (evals (Prod e t))
+eval (Neg e) = if (fv e /= [] || hasBool(e))
+               then error "Variable libre o bool en negativo aritmético"
+               else (evals (Neg e))
+eval (Suc e) = if (fv e /= [] || hasBool(e))
+               then error "Variable libre o bool en sucesor"
+               else (evals (Suc e))
+eval (Pred e) = if (fv e /= [] || hasBool(e))
+               then error "Variable libre o bool en predecesor"
+               else (evals (Pred e))
+eval (Not e) = if (fv e /= [] || isNum(evals e))
+               then error "Variable libre o número en negación"
+               else (evals (Not e))
+eval (And e t) = if (fv (And e t) /= [] || isNum(evals e) || isNum(evals t))
+                 then error "Variable libre o número en conjunción"
+                 else (evals (And e t))
+eval (Or e t) = if (fv (Or e t) /= [] || isNum(evals e) || isNum(evals t))
+                then error "Variable libre o número en disyunción"
+                else (evals (Or e t))
+eval (If t1 t2 t3) = if (fv (If t1 t2 t3) /= [] || isNum(evals t1))
+                     then error "Variable libre en If o número en condición de If"
+                     else (evals (If t1 t2 t3))
+eval (Iszero e) = if (fv e /= [] || hasBool(evals e))
+                  then error "Variable libre o bool en operación Iszero"
+                  else (evals (Iszero e))
+eval (Let e (Abs x t)) = if fv (Let e (Abs x t)) /= []
+                         then error "Variable libre en Let"
+                         else eval(evals (Let e (Abs x t)))
+eval e = error "Expresión mal formada"
 
 data Type = () -- Definir los tipos de EAB
 type Ctx = () -- Definir un sinomo para los contextos
