@@ -1,3 +1,6 @@
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# OPTIONS_GHC -Wno-overlapping-patterns #-}
+{-# OPTIONS_GHC -Wno-deferred-out-of-scope-variables #-}
 module EAB where
 
 type Variable = String
@@ -16,7 +19,12 @@ data EAB = Var Variable
          | Iszero EAB
          | Let EAB EAB
          | If EAB EAB EAB
-         | Abs Variable EAB deriving (Show, Eq)
+         | Abs Variable EAB 
+         | Gt EAB EAB 
+         | Lt EAB EAB 
+         | MatchNat EAB EAB Variable EAB deriving (Show, Eq)
+         
+         
 
 type Subst = (Variable,EAB)
 
@@ -113,6 +121,9 @@ evals (If t1 t2 t3) = eval1(If (evals(t1)) (evals(t2)) (evals(t3)))
 evals (Iszero e) = eval1(Iszero (evals(e)))
 evals (Let e t) = eval1(Let (evals(e)) (evals(t)))
 evals (Abs x e) = (Abs x e)
+evals (MatchNat e e1 x e2) = if (block e)
+                              then (MatchNat e e1 x e2)
+                              else evals (MatchNat (evals e) e1 x e2)
 
 isNum :: EAB -> Bool
 isNum (Num n) = True
@@ -174,6 +185,10 @@ eval (Let e (Abs x t)) = if fv (Let e (Abs x t)) /= []
                          then error "Variable libre en Let"
                          else eval(evals (Let e (Abs x t)))
 eval e = error "Expresión mal formada"
+eval (MatchNat e e1 y e2) = let x = evals (MatchNat e e1 y e2) in
+  if (isNat x || Boolean x)
+    then x
+  else error "MatchNat funciona con un número y dos expresiones EAB "
 
 -- ****************** Semantica Estatica ***********************
 data Type = TBool
@@ -284,7 +299,15 @@ vt ((a,b):xs) (And e1 (Var e2)) t | b == t && a == e2 = tnum e1 t
 vt ((a,b):xs) (Or (Var e1) e2) t | b == t && a == e1 = tnum e2 t
 vt ((a,b):xs) (Or e1 (Var e2)) t | b == t && a == e2 = tnum e1 t
 vt a e t = False
-
+vt l (MatchNat e e1 y e2) t = vt l e Nat &&
+                          vt l e1 t &&
+                          vt ((y,Nat):l) e2 t
+vt l (Gt a b) t = t == Boolean &&
+                    vt l a Nat &&
+                    vt l b Nat
+vt l (Lt a b) t = t == Boolean &&
+                    vt l a Nat &&
+                    vt l b Nat
 
 
 
@@ -299,7 +322,6 @@ vt a e t = False
 
 
 evalt :: EAB -> EAB
-evalt _ = error "Implementar"           
-
-
-
+evalt e = if (vt [] e Nat || vt [] e HasBool)
+          then evals e
+          else error ["incorrecto"]
