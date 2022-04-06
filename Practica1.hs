@@ -1,4 +1,6 @@
 module EAB where
+
+
 type Variable = String
 
 data EAB = Var Variable
@@ -127,11 +129,131 @@ eval (Iszero e) = eval1(Iszero (eval(e)))
 eval (Let e t) = eval1(Let (evals(e)) (evals(t)))
 -- TODO debe devolver error para expresiones que no se pueden interpretar
 
-data Type = () -- Definir los tipos de EAB
-type Ctx = () -- Definir un sinomo para los contextos
+-- ****************** Semantica Estatica ***********************
+data Type = TBool 
+          | TNat  deriving (Eq,Show)        -- Definir los tipos de EAB
+
+
+type Ctx = [(Variable, Type)] -- Definir un sinomo para los contextos
+
+
+tnum :: EAB -> Type -> Bool 
+tnum (Num a) (TNat) = True 
+tnum a b = False
+
+tbool :: EAB -> Type -> Bool 
+tbool (B a) (TBool) = True 
+tbool a b = False
+
+tnot :: EAB -> Type -> Bool 
+tnot (Not a) (TBool) | tbool a TBool = True 
+                     | otherwise = False 
+tnot a b = False 
+
+ttrue :: EAB -> Type -> Bool 
+ttrue (B True) (TBool) = True 
+ttrue a b = False 
+
+tfalse :: EAB -> Type -> Bool 
+tfalse (B False) TBool = True 
+tfalse a b = False
+
+tsum :: EAB -> Type -> Bool 
+tsum (Sum a b) (TNat) | tnum a TNat && tnum b TNat = True 
+                      | otherwise = False 
+tsum a b = False
+
+tprod :: EAB -> Type -> Bool 
+tprod (Prod a b) (TNat) | tnum a TNat && tnum b TNat = True 
+                        | otherwise = False 
+tprod a b = False
+
+tsuc :: EAB -> Type -> Bool 
+tsuc (Suc a) (TNat) | tnum a (TNat) = True 
+                    | otherwise = False 
+tsuc a b = False
+
+
+tpred :: EAB -> Type -> Bool 
+tpred (Pred a) (TNat) | tnum a (TNat) = True 
+                    | otherwise = False 
+tpred a b = False
+
+tand :: EAB -> Type -> Bool 
+tand (And a b) (TBool) | (ttrue a (TBool)) && (ttrue b TBool) = True 
+                       | otherwise  = False 
+tand a b = False 
+
+tor :: EAB -> Type -> Bool 
+tor (Or a b) (TBool) | (ttrue a TBool) && (ttrue b TBool) = True
+                     | ttrue a TBool && tfalse b TBool = True 
+                     | tfalse a TBool && ttrue b TBool = True 
+                     | otherwise  = False 
+tor a b = False 
+
+tisz :: EAB -> Type -> Bool 
+tisz (Iszero a) (TNat) | tnum (Num 0) (TNat) = True 
+                       | otherwise = False 
+
+tisz a b = False 
+
+
+
+tlet :: EAB -> Type -> Bool
+tlet (Let a b) c | tnum a c && tnum b c = True 
+                 | tprod a c && tprod b c = True 
+                 | tnum a c && tprod b c = True 
+                 | tprod a c && tprod b c =True 
+                 | tsum a c && tsum b c = True 
+--                 | tand a c && tand a c = True 
+--                 | tor a c && tor a c = True 
+--                 | tor a c && tand a c = True 
+--                 | tand a c && tor a c = True 
+--                 | tisz b c = True 
+                 | otherwise = False
+
+tif :: EAB -> Type -> Bool 
+tif (If a b c) d | tbool a (TBool) && tnum a d && tnum c d = True 
+                 | tbool a TBool && tbool a d && tbool c d = True 
+                 | tbool a (TBool) && tsum b d && tnum c d = True
+                 | tbool a (TBool) && tprod b d && tnum c d = True 
+                 | tbool a (TBool) && tand b d && tbool c d = True 
+                 | tbool a (TBool) && tor b d && tbool c d = True 
+                 | tbool a TBool && tisz b d && tisz c d = True 
+                 |otherwise = False 
+                 
+
 
 vt :: Ctx -> EAB -> Type -> Bool
-vt _ _ _ = error "Implementar"
+vt [] (Num e) t = tnum (Num e) t
+vt [] (B e) t = tbool (B e) t
+vt [] (Sum e1 e2) t = tsum (Sum e1 e2) t
+vt [] (Prod e1 e2) t = tprod (Prod e1 e2) t
+vt ((a,b):xs) (Sum (Var e1) e2) t | b == t && a == e1 = tnum e2 t
+vt ((a,b):xs) (Sum e1 (Var e2)) t | b == t && a == e2 = tnum e1 t
+vt ((a,b):xs) (Prod (Var e1) e2) t | b == t && a == e1 = tnum e2 t
+vt ((a,b):xs) (Prod e1 (Var e2)) t | b == t && a == e2 = tnum e1 t
+vt ((a,b):xs) (And (Var e1) e2) t | b == t && a == e1 = tnum e2 t
+vt ((a,b):xs) (And e1 (Var e2)) t | b == t && a == e2 = tnum e1 t
+vt ((a,b):xs) (Or (Var e1) e2) t | b == t && a == e1 = tnum e2 t
+vt ((a,b):xs) (Or e1 (Var e2)) t | b == t && a == e2 = tnum e1 t
+vt a e t = False
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 evalt :: EAB -> EAB
 evalt _ = error "Implementar"           
+
+
+
