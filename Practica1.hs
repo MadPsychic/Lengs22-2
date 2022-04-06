@@ -54,11 +54,11 @@ subs (Iszero e) s = Iszero (subs e s)
 subs (If t1 t2 t3) s = If (subs t1 s) (subs t2 s) (subs t3 s)
 subs (Let a1 a2) s = Let (subs a1 s) (subs a2 s)
 subs (Abs z e) s@(x,r)
-  | z == x || elem z (fv r) = error "TODO"
+  | z == x || elem z (fv r) = error "Se requiere una equivalencia"
   | otherwise = Abs z (subs e s)
 
 eval1 :: EAB -> EAB
-eval1 (Var v) = error "Variable libre"
+eval1 (Var v) = (Var v)
 eval1 (Num n) = (Num n)
 eval1 (B b) = (B b)
 eval1 (Sum (Num n) (Num m)) = (Num (n+m))
@@ -108,8 +108,7 @@ evals (And e t) = eval1(And (evals(e)) (evals(t)))
 evals (Or e t) = eval1(Or (evals(e)) (evals(t)))
 evals (If t1 t2 t3) = eval1(If (evals(t1)) (evals(t2)) (evals(t3)))
 evals (Iszero e) = eval1(Iszero (evals(e)))
--- TODO faltan Let y Abs
--- No va a funcionar porque no debe haber errores de ejecución
+evals (Let e t) = eval1(Let (evals(e)) (evals(t)))
 
 eval :: EAB -> EAB
 eval (Var v) = error "Variable libre"
@@ -125,7 +124,8 @@ eval (And e t) = eval1(And (eval(e)) (eval(t)))
 eval (Or e t) = eval1(Or (eval(e)) (eval(t)))
 eval (If t1 t2 t3) = eval1(If (eval(t1)) (eval(t2)) (eval(t3)))
 eval (Iszero e) = eval1(Iszero (eval(e)))
--- TODO revisar, faltan Let y Abs
+eval (Let e t) = eval1(Let (evals(e)) (evals(t)))
+-- TODO debe devolver error para expresiones que no se pueden interpretar
 
 data Type = () -- Definir los tipos de EAB
 type Ctx = () -- Definir un sinomo para los contextos
