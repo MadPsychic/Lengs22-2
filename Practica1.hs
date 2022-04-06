@@ -321,7 +321,3 @@ vt l (Lt a b) t = t == Boolean &&
 
 
 
-evalt :: EAB -> EAB
-evalt e = if (vt [] e Nat || vt [] e HasBool)
-          then evals e
-          else error ["incorrecto"]
