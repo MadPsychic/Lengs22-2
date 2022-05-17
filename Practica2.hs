@@ -1,7 +1,12 @@
 module Sintax where
 
-type Identifier = String
-    
+type Identifier = Int
+data Type = T Identifier
+          | Integer | Boolean
+          | Arrow Type Type
+
+type Ctxt = [(Identifier, Type)]
+type Constraint = [(Type, Type)]
 
 {--
  -- Sintaxis Practica1
@@ -10,13 +15,42 @@ type Identifier = String
  -- dio en la especificacionde la practica.
  --}
 data Expr = Var Identifier | I Int | B Bool
-         | Add Expr Expr | Mul Expr Expr
-         | Succ Expr | Pred Expr | Neg Expr -- Hint 1: Eliminar el constructor Neg
-         | And Expr Expr | Or Expr Expr
-         | Not Expr | Iszero Expr
-         | If Expr Expr Expr
-         | Let Expr Expr -- Hint 2: El Let pueden implementarlo como en la especificacion de la practica 1 o como en la 2
-         | Abs Identifier Expr  -- Hint 3: Este constructor puede cambiar de nombre (Fn)
-           deriving (Show, Eq)
+          | Fn Identifier Expr
+          | Succ Expr | Pred Expr
+          | Add Expr Expr | Mul Expr Expr
+          | Not Expr | Iszero Expr
+          | And Expr Expr | Or Expr Expr
+          | Lt Expr Expr | Gt Expr Expr | Eq Expr Expr
+          | If Expr Expr Expr
+          | Let Identifier Expr Expr
+          | App Expr Expr
+          deriving (Show, Eq)
 
+-- * Algoritmo de inferencia de tipos
 
+tvars :: Type -> [Identifier]
+tvars _ = error "UwU"
+
+fresh :: [Type] -> Type
+fresh _ = error "UwU"
+
+rest :: ([Type], Expr) -> ([Type], Ctxt, Type, Constraint)
+rest _ = error "OwO"
+
+-- * Algoritmo de unificación
+
+type Substitution = [(Identifier, Type)]
+
+subst :: Type -> Substitution -> Type
+subst = error "UwO"
+
+comp :: Substitution -> Substitution -> Substitution
+comp = error "OwU"
+
+unif :: Constraint -> Substitution
+unif = error "meh"
+
+-- * Inferencia de tipos
+
+infer :: Expr -> (Ctxt, Type)
+infer = error "bruh i'm out of error names"
