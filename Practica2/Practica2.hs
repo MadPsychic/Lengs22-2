@@ -1,5 +1,6 @@
 module Practica2 where
 import Sintax
+import Data.List
 
 type Identifier = Int
 data Type = T Practica2.Identifier
@@ -21,10 +22,23 @@ type Constraint = [(Type, Type)]
 -- * Tipado con restricciones
 
 tvars :: Type -> [Practica2.Identifier]
-tvars _ = error "UwU"
+tvars (T s) = [s]
+tvars Integer = []
+tvars Boolean = []
+tvars (Arrow a b) = nub(tvars a ++ tvars b)
+
+
+fresh' :: [Type] -> [Int]
+fresh' [] = []
+fresh' (x:xs) = nub((tvars x) ++ fresh'(xs)) 
+
+fresh'' :: [Int] -> Int
+fresh'' xs = head([0..] \\ xs)
 
 fresh :: [Type] -> Type
-fresh _ = error "UwU"
+fresh [] = error "No exite tipo"
+fresh xs = T (fresh''(fresh' xs))
+
 
 rest :: ([Type], Expr) -> ([Type], Ctxt, Type, Constraint)
 rest (xs, (Var x)) = (((fxs):xs), [(x, fxs)], fxs, [])
@@ -98,10 +112,15 @@ rest (xs, (If e1 e2 e3)) = (xs3, g1 ++ g2 ++ g3, t1, r1 ++ r2 ++ r3 ++ rt1 ++ rt
 
 -- * Algoritmo de unificación
 
-type Substitution = [(Identifier, Type)]
+type Substitution = [(Practica2.Identifier, Type)]
 
 subst :: Type -> Substitution -> Type
-subst = error "UwO"
+subst t [] = t
+subst (T n) ((i,t):xs) = if n == i
+                           then  t
+                           else subst (T n) xs
+subst (Arrow t1 t2) xs = Arrow (subst t1 xs) (subst t2 xs)
+subst t _ = t
 
 comp :: Substitution -> Substitution -> Substitution
 comp s1 s2 = noDup ((map (\x -> (fst x, subst (snd x) s2 )) s1) ++ s2)
