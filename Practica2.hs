@@ -5,6 +5,13 @@ data Type = T Identifier
           | Integer | Boolean
           | Arrow Type Type
 
+instance Show Type where
+  show e = case e of
+    (T t) -> "T " ++ show t
+    (Arrow e t) -> show e ++ " -> " ++ show t
+    Integer -> "int"
+    Boolean -> "bool"
+
 type Ctxt = [(Identifier, Type)]
 type Constraint = [(Type, Type)]
 
