@@ -8,10 +8,10 @@ data Type = T Practica2.Identifier
 
 instance Show Type where
   show e = case e of
-    (T t) -> "T " ++ show t
+    (T i) -> "T " ++ show i
     (Arrow e t) -> show e ++ " -> " ++ show t
-    Integer -> "int"
-    Boolean -> "bool"
+    Integer -> "Int"
+    Boolean -> "Bool"
 
 type Ctxt = [(Sintax.Identifier, Type)]
 type Constraint = [(Type, Type)]
