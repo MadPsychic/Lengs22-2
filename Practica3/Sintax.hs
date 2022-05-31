@@ -29,8 +29,7 @@ data Expr = Var Identifier | I Int | B Bool
           | Abs Identifier Expr
           deriving (Show, Eq)
 
-data Maybe a = Just a 
-             | Nothing
+
 
 type Substitution = (Identifier, Expr)
 {--
@@ -73,6 +72,6 @@ eval1 (If t1 t2 t3) = (If (eval1(t1)) t2 t3)
 eval1 (Iszero (I 0)) = (B True)
 eval1 (Iszero (I n)) = (B False)
 eval1 (Iszero t) = (Iszero (eval1(t)))
-eval1 (Let (B b) (Abs x y) (Abs e a)) = (subs e (x,(B b)))
-eval1 (Let (I n) (Abs x y) (Abs e a)) = (subs e (x,(I n)))
-eval1 (Let t1 t2 t3) = (Let (eval1(t1)) t2 t3)
+--eval1 (Let (B b) (Abs x y) (Abs e a)) = (Substitution e (x,(B b)))
+--eval1 (Let (I n) (Abs x y) (Abs e a)) = (Substitution e (x,(I n)))
+--eval1 (Let t1 t2 t3) = (Let (eval1(t1)) t2 t3)

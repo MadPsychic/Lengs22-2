@@ -1,6 +1,7 @@
 module Practica3 where
 import Sintax
 import Data.List
+import Data.Maybe
 
 type Address = Int
 
@@ -52,13 +53,29 @@ contains = \elem -> \myList ->
     x:xs | x == elem -> True 
     _:xs -> contains elem xs 
 
+distintos :: Eq a => [a] -> Bool
+distintos [] = False
+distintos [x] = False
+distintos (x:xs) | x `elem` xs = True
+                 | otherwise = distintos xs
+
+listValue :: Memory -> [Value]
+listValue[] = []
+listValue[x] = [snd x]
+listValue(x:xs) = [snd x] ++ listValue xs
+
 
 access ::  Address -> Memory -> Maybe Value
-access a (x:xs) | eval1 (Dref (snd x)) = let e = access snd x
+access a xs 
+--            |contains a (listMemory xs) = Just (eval1(Dref ((listValue xs) !!a))) 
+            |contains a (listMemory xs) = Just ((listValue xs) !!(a-1))
+            |distintos xs = error "Corrupted memory"
+            |otherwise = Nothing
 
-
+ -- let e =
 
 -- *****************   Test access ***********************
 access1 = access 3 [ ]
-
-
+access2 = access 1 [ ( 0 , B False ) , ( 2 , I 9 ) ]
+access3 = access 2 [ ( 0 , I 21 ) , ( 2 , I 12 ) , ( 1 , Void) ]
+access4 = access 2 [ ( 0 , I 21 ) , ( 0 , B False ) , ( 3 , Void) , ( 2 , I 12 ) ]
