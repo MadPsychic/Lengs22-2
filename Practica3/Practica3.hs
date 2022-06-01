@@ -126,7 +126,43 @@ update5 = update ( 2 , I 14 ) [ ( 0 , I 13 ) , ( 1 , B True ) , ( 2 , I 25 ) ]
 
 
 
+{--
+ -- frVars. Extiende esta función para las nuevas expresiones.
+ --}
 
+frVars :: Expr -> [ Identifier ]
+frVars (Var v) = [v]
+frVars (I x) = []
+frVars (B x)  = []
+frVars (L x ) = []
+frVars (Add x y) = (frVars x) ++ (frVars y)
+frVars (Mul x y) = (frVars x)++ (frVars y)
+frVars (Succ x) = (frVars x)
+frVars (Pred x) = (frVars x)
+frVars (And x y) = (frVars x)++ (frVars y)
+frVars (Or x y) = (frVars x) ++ (frVars y)
+frVars (Not x) = (frVars x)
+frVars (Iszero x) = (frVars x)
+frVars (Lt x y) = (frVars x) ++ (frVars y)
+frVars (Gt x y) = (frVars x)++ (frVars y)
+frVars (Eq x y) = (frVars x) ++ (frVars y)
+frVars (If x y z)= (frVars x) ++ (frVars y) ++ (frVars z)
+frVars (Let x y z) = (frVars y) ++ (frVars z)
+frVars (Fn x y) = (frVars y)
+frVars (App x y) = (frVars x) ++ (frVars y)
+frVars (Alloc x) = (frVars x)
+frVars (Dref x) = (frVars x)
+frVars (Assign x y) = (frVars x) ++ (frVars y)
+frVars Void = []
+frVars (Seq x y)= (frVars x) ++ (frVars y)
+frVars (While x y) = (frVars x) ++ (frVars y)
+frVars (Abs x a1) = filter (/= x) (frVars a1)
+
+
+
+--- +++++++++++++++++++++ Test frVars ++++++++++++++++++++++++
+frVars1 = frVars (Add (Var "x" ) ( I 5 ) )
+frVars2 = frVars ( Assign (L 2 ) (Add ( I 0 ) (Var "z" ) ) )
 
 
 {--
@@ -137,37 +173,33 @@ subst :: Expr -> Substitution -> Expr
 subst (Var x) (a,b) = if x == a
                       then b
                       else Var x
-subst (I x) (a,b) = if x == a 
-  then b
-  else I x
-subst (B x) (a,b) = if x == a 
-  then b
-  else B x
-subst (L x ) (a,b) = if x == a 
-  then b
-  else I x
-subst Add x y =  Add (subst x) (subst y)
-subst Mul x y = Mul (subst x) (subst y)
-subst Succ x = Succ (subst x)
-subst Pred x = Pred (subst x)
-subst And x y = And (subst x) (subst y)
-subst Or x y = Or(subst x) (subst y)
-subst Not x = Not(subst x)
-subst Iszero x = Iszero(subst x)
-subst Lt x y = Lt (subst x) (subst y)
-subst Gt x y = Gt (subst x) (subst y)
-subst Eq x y = Eq (subst x) (subst y)
-subst If x y z= If (subst x) (subst y) (subst z)
-subst Let x y z = Let x (subst y) (subst z)
-subst Fn x y = Fn x (subst y)
-subst App x y = App (subst x) (subst y)
-subst Alloc x = Alloc (subst x)
-subst Dref x = Dref (subst x)
-subst Assign x y = Assign (subst x) (subst y)
-subst Void = Void
-subst Seq x y= Seq (subst x) (subst y)
-subst While x y = While (subst x) (subst y)
-subst Abs x y = x (subst y)
+subst (I x) _ = I x
+subst (B x) _ = B x
+subst (L x ) _ = L x
+subst (Add x y) e =  Add (subst x e) (subst y e)
+subst (Mul x y) e = Mul (subst x e) (subst y e)
+subst (Succ x) e = Succ (subst x e)
+subst (Pred x) e = Pred (subst x e)
+subst (And x y) e = And (subst x e) (subst y e)
+subst (Or x y) e = Or(subst x e) (subst y e)
+subst (Not x) e = Not(subst x e)
+subst (Iszero x) e = Iszero(subst x e)
+subst (Lt x y) e = Lt (subst x e) (subst y e)
+subst (Gt x y) e = Gt (subst x e) (subst y e)
+subst (Eq x y) e = Eq (subst x e) (subst y e)
+subst (If x y z) e = If (subst x e) (subst y e) (subst z e)
+subst (Let x y z) e = Let x (subst y e) (subst z e)
+subst (Fn x y) e = Fn x (subst y e)
+subst (App x y) e = App (subst x e) (subst y e)
+subst (Alloc x) e = Alloc (subst x e)
+subst (Dref x) e = Dref (subst x e)
+subst (Assign x y) e = Assign (subst x e) (subst y e)
+subst Void e = Void
+subst (Seq x y) e= Seq (subst x e) (subst y e)
+subst (While x y) e = While (subst x e) (subst y e)
+subst (Abs z e) s@(x,r)
+  | z == x || elem z (frVars r) = error "Se requiere una equivalencia"
+  | otherwise = Abs z (subst e s)
 
 
 
