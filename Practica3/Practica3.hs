@@ -162,15 +162,15 @@ evals (mem, Var x) = (mem, Var x)
 evals (mem, I x) = (mem, I x)
 evals (mem, B x) = (mem, B x)
 evals (mem, e@(Add (I n) (I m))) = (mem, I (n+m))
-evals (mem, e@(Add t p)) = Practica3.eval1 (memt, f)
+evals (mem, e@(Add t p)) = Practica3.eval1 (mem3, f)
   where (mem1, f1) = Practica3.eval1 (mem, t)
         (mem2, f2) = Practica3.eval1 (mem1, p)
-        (memt, f) = Practica3.eval1 (mem2, Add f1 f2)
+        (mem3, f) = Practica3.eval1 (mem2, Add f1 f2)
 evals (mem, e@(Mul (I n) (I m))) = (mem, I (n*m))
-evals (mem, e@(Mul t p)) = Practica3.eval1 (memt, f)
+evals (mem, e@(Mul t p)) = Practica3.eval1 (mem3, f)
   where (mem1, f1) = Practica3.eval1 (mem, t)
         (mem2, f2) = Practica3.eval1 (mem1, p)
-        (memt, f) = Practica3.eval1 (mem2, Mul f1 f2)
+        (mem3, f) = Practica3.eval1 (mem2, Mul f1 f2)
 evals (mem, Succ (I n)) = (mem, I (n+1))
 evals (mem, Succ e) = Practica3.eval1 (mem, Succ e)
 evals (mem, Pred (I n)) = (mem, I (n-1))
@@ -178,15 +178,15 @@ evals (mem, Pred e) = Practica3.eval1 (mem, Pred e)
 evals (mem, Not (B b)) = (mem, B (not b))
 evals (mem, Not e) = Practica3.eval1 (mem, Not e)
 evals (mem, e@(And (B b) (B o))) = (mem, B (b && o))
-evals (mem, e@(And t p)) = Practica3.eval1 (memt, f)
+evals (mem, e@(And t p)) = Practica3.eval1 (mem3, f)
   where (mem1, f1) = Practica3.eval1 (mem, t)
         (mem2, f2) = Practica3.eval1 (mem1, p)
-        (memt, f) = Practica3.eval1 (mem2, And f1 f2)
+        (mem3, f) = Practica3.eval1 (mem2, And f1 f2)
 evals (mem, e@(Or (B b) (B o))) = (mem, B (b || o))
-evals (mem, e@(Or t p)) = Practica3.eval1 (memt, f)
+evals (mem, e@(Or t p)) = Practica3.eval1 (mem3, f)
   where (mem1, f1) = Practica3.eval1 (mem, t)
         (mem2, f2) = Practica3.eval1 (mem1, p)
-        (memt, f) = Practica3.eval1 (mem2, Or f1 f2)
+        (mem3, f) = Practica3.eval1 (mem2, Or f1 f2)
 evals (mem, Iszero (I n)) = if n == 0
                             then (mem, B True)
                             else (mem, B False)
@@ -202,3 +202,16 @@ evale :: Expr -> Expr
 evale (Var x) = (Var x)
 evale (I x) = (I x)
 evale (B x) = (B x)
+evale (e@(Add t p)) = evalInt e
+evale (e@(Mul t p)) = evalInt e
+-- evale 
+
+evalInt :: Expr -> Expr
+evalInt e = case evals ([(0, Void)], e) of
+              (mem, I n) -> I n
+              _ -> error "Requerimos obtener un entero"
+
+evalB :: Expr -> Expr
+evalB e = case evals ([(0, Void)], e) of
+            (mem, B b) -> B b
+            _ -> error "Requerimos obtener un booleano"
