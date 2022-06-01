@@ -115,6 +115,43 @@ update3 = update ( 0 , Fn "x" (Var "x" ) ) [ ( 0 , I 21 ) , ( 1 , Void ) , ( 2 ,
 update4 = update ( 2 , I 14 ) [ ( 0 , I 21 ) , ( 2 , Void ) , ( 2 , I 12 ) ]
 update5 = update ( 2 , I 14 ) [ ( 0 , I 13 ) , ( 1 , B True ) , ( 2 , I 25 ) ]
 
+
+{--
+ -- frVars. Extiende esta función para las nuevas expresiones.
+ --}
+
+frVars :: Expr -> [ Identifier ]
+frVars (Var v) = [v]
+frVars (I x) = []
+frVars (B x)  = []
+frVars (L x ) = []
+frVars (Add x y) = (frVars x) ++ (frVars y)
+frVars (Mul x y) = (frVars x)++ (frVars y)
+frVars (Succ x) = (frVars x)
+frVars (Pred x) = (frVars x)
+frVars (And x y) = (frVars x)++ (frVars y)
+frVars (Or x y) = (frVars x) ++ (frVars y)
+frVars (Not x) = (frVars x)
+frVars (Iszero x) = (frVars x)
+frVars (Lt x y) = (frVars x) ++ (frVars y)
+frVars (Gt x y) = (frVars x)++ (frVars y)
+frVars (Eq x y) = (frVars x) ++ (frVars y)
+frVars (If x y z)= (frVars x) ++ (frVars y) ++ (frVars z)
+frVars (Let x y z) = (frVars y) ++ (frVars z)
+frVars (Fn x y) = (frVars y)
+frVars (App x y) = (frVars x) ++ (frVars y)
+frVars (Alloc x) = (frVars x)
+frVars (Dref x) = (frVars x)
+frVars (Assign x y) = (frVars x) ++ (frVars y)
+frVars Void = []
+frVars (Seq x y)= (frVars x) ++ (frVars y)
+frVars (While x y) = (frVars x) ++ (frVars y)
+frVars (Abs x a1) = filter (/= x) (frVars a1)
+
+-- *++++++++++++++++++++ Test frVars ++++++++++++++++++++++++
+frVars1 = frVars (Add (Var "x" ) ( I 5 ) )
+frVars2 = frVars ( Assign (L 2 ) (Add ( I 0 ) (Var "z" ) ) )
+
 {--
 -- subst. Extiende esta función para las nuevas expresiones.
 --}
@@ -123,33 +160,35 @@ subst :: Expr -> Substitution -> Expr
 subst (Var x) (a,b) = if x == a
                       then b
                       else Var x
-subst (I x) (a, b) = I x
-subst (B x) (a, b) = B x
-subst (L x) (a, b) = L x
-subst (Add x y) s =  Add (subst x s) (subst y s)
-subst (Mul x y) s = Mul (subst x s) (subst y s)
-subst (Succ x) s = Succ (subst x s)
-subst (Pred x) s = Pred (subst x s)
-subst (And x y) s = And (subst x s) (subst y s)
-subst (Or x y) s = Or (subst x s) (subst y s)
-subst (Not x) s = Not (subst x s)
-subst (Iszero x) s = Iszero (subst x s)
-subst (Lt x y) s = Lt (subst x s) (subst y s)
-subst (Gt x y) s = Gt (subst x s) (subst y s)
-subst (Eq x y) s = Eq (subst x s) (subst y s)
-subst (If x y z) s = If (subst x s) (subst y s) (subst z s)
-subst (Let x y z) s = Let x (subst y s) (subst z s)
-subst (Fn x y) s = Fn x (subst y s)
-subst (App x y) s = App (subst x s) (subst y s)
-subst (Alloc x) s = Alloc (subst x s)
-subst (Dref x) s = Dref (subst x s)
-subst (Assign x y) s = Assign (subst x s) (subst y s)
-subst Void s = Void
-subst (Seq x y) s = Seq (subst x s) (subst y s)
-subst (While x y) s = While (subst x s) (subst y s)
-subst (Abs x y) s = Abs x (subst y s)
+subst (I x) _ = I x
+subst (B x) _ = B x
+subst (L x ) _ = L x
+subst (Add x y) e =  Add (subst x e) (subst y e)
+subst (Mul x y) e = Mul (subst x e) (subst y e)
+subst (Succ x) e = Succ (subst x e)
+subst (Pred x) e = Pred (subst x e)
+subst (And x y) e = And (subst x e) (subst y e)
+subst (Or x y) e = Or(subst x e) (subst y e)
+subst (Not x) e = Not(subst x e)
+subst (Iszero x) e = Iszero(subst x e)
+subst (Lt x y) e = Lt (subst x e) (subst y e)
+subst (Gt x y) e = Gt (subst x e) (subst y e)
+subst (Eq x y) e = Eq (subst x e) (subst y e)
+subst (If x y z) e = If (subst x e) (subst y e) (subst z e)
+subst (Let x y z) e = Let x (subst y e) (subst z e)
+subst (Fn x y) e = Fn x (subst y e)
+subst (App x y) e = App (subst x e) (subst y e)
+subst (Alloc x) e = Alloc (subst x e)
+subst (Dref x) e = Dref (subst x e)
+subst (Assign x y) e = Assign (subst x e) (subst y e)
+subst Void e = Void
+subst (Seq x y) e= Seq (subst x e) (subst y e)
+subst (While x y) e = While (subst x e) (subst y e)
+subst (Abs z e) s@(x,r)
+  | z == x || elem z (frVars r) = error "Se requiere una equivalencia"
+  | otherwise = Abs z (subst e s)
 
---- ******************** Test subst ************************
+-- ******************** Test subst ************************
 subst1 = subst (Add (Var "x" ) ( I 5 ) ) ( "x" , I 10 )
 subst2 = subst ( Let "x" ( I 1 ) (Var "x" ) ) ( "y" , Add (Var "x" ) ( I 5 ) )
 subst3 = subst (Assign (L 2 ) (Add ( I 0 ) (Var "z" ) ) ) ("z" , B False )
