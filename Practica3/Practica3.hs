@@ -233,14 +233,17 @@ eval1 (mem, Seq Void e) = (mem, e)
 eval1 (mem, Seq t e) = (memAux, Seq (s) (e))
   where (memAux, s) = Practica3.eval1 (mem, t)
 eval1 (mem, While e t) = (mem, If e (Seq t (While e t)) Void)
+eval1 (mem, Assign (L n) t) = case update (n, t) mem of
+                                Nothing -> ([], Void)
+                                Just (x:xs) -> ((x:xs), Void)
 
 -- *****************   Test eval1 ***********************
 evalT1 = Practica3.eval1 ( [ ( 0 , B False ) ] , (Add ( I 1 ) ( I 2 ) ) )
-evalT2 = Practica3.eval1 ( [ ( 0 , B False ) ] , ( Let "x" ( I 1 ) (Add (Var "x" ) ( I 2 ) ) ) )
+evalT2 = Practica3.eval1 ( [ ( 0 , B False ) ] , ( Let "x" ( I 1 ) (Fn "x" (Add (Var "x") (I 2 ) ) ) ) )
 evalT3 = Practica3.eval1 ( [ ( 0 , B False ) ] , Assign (L 0 ) (B True) )
 evalT4 = Practica3.eval1 ( [ ] , While (B True) (Add ( I 1 ) ( I 1 ) ) )
 
-evals :: (Memory , Expr ) -> (Memory , Expr )
+evals :: (Memory, Expr) -> (Memory, Expr)
 evals (mem, Var x) = (mem, Var x)
 evals (mem, I x) = (mem, I x)
 evals (mem, B x) = (mem, B x)
@@ -277,7 +280,7 @@ evals (mem, Iszero e) = Practica3.eval1 (memAux, f)
   where (memAux, f) = Practica3.eval1 (mem, e)
 
 -- *****************   Test evals ***********************
-evals1 = evals ( [ ] , ( Let "x" (Add ( I 1 ) ( I 2 ) ) (Eq (Var "x" ) ( I 0 ) ) ) )
+evals1 = evals ( [ ] , ( Let "x" (Add ( I 1 ) ( I 2 ) ) (Fn "x" (Eq (Var "x" ) ( I 0 ) ) ) ) )
 evals2 = evals ( [ ] , (Add (Mul ( I 2 ) ( I 6 ) ) (B True) ) )
 evals3 = evals ( [ ] , Assign ( Alloc (B False ) ) ( Add ( I 1 ) ( I 9 ) ) )
 
