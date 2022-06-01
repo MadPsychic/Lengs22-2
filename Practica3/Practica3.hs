@@ -10,6 +10,7 @@ type Value = Expr
 type Cell = (Address, Value)
 type Memory = [Cell]
 
+
 {--
  -- newAddress.Dada una memoria, genera una nueva direccion de memoria
  -- que no este contenida en esta.
@@ -114,6 +115,45 @@ update3 = update ( 0 , Fn "x" (Var "x" ) ) [ ( 0 , I 21 ) , ( 1 , Void ) , ( 2 ,
 update4 = update ( 2 , I 14 ) [ ( 0 , I 21 ) , ( 2 , Void ) , ( 2 , I 12 ) ]
 update5 = update ( 2 , I 14 ) [ ( 0 , I 13 ) , ( 1 , B True ) , ( 2 , I 25 ) ]
 
+{--
+-- subst. Extiende esta función para las nuevas expresiones.
+--}
+
+subst :: Expr -> Substitution -> Expr
+subst (Var x) (a,b) = if x == a
+                      then b
+                      else Var x
+subst (I x) (a, b) = I x
+subst (B x) (a, b) = B x
+subst (L x) (a, b) = L x
+subst (Add x y) s =  Add (subst x s) (subst y s)
+subst (Mul x y) s = Mul (subst x s) (subst y s)
+subst (Succ x) s = Succ (subst x s)
+subst (Pred x) s = Pred (subst x s)
+subst (And x y) s = And (subst x s) (subst y s)
+subst (Or x y) s = Or (subst x s) (subst y s)
+subst (Not x) s = Not (subst x s)
+subst (Iszero x) s = Iszero (subst x s)
+subst (Lt x y) s = Lt (subst x s) (subst y s)
+subst (Gt x y) s = Gt (subst x s) (subst y s)
+subst (Eq x y) s = Eq (subst x s) (subst y s)
+subst (If x y z) s = If (subst x s) (subst y s) (subst z s)
+subst (Let x y z) s = Let x (subst y s) (subst z s)
+subst (Fn x y) s = Fn x (subst y s)
+subst (App x y) s = App (subst x s) (subst y s)
+subst (Alloc x) s = Alloc (subst x s)
+subst (Dref x) s = Dref (subst x s)
+subst (Assign x y) s = Assign (subst x s) (subst y s)
+subst Void s = Void
+subst (Seq x y) s = Seq (subst x s) (subst y s)
+subst (While x y) s = While (subst x s) (subst y s)
+subst (Abs x y) s = Abs x (subst y s)
+
+--- ******************** Test subst ************************
+subst1 = subst (Add (Var "x" ) ( I 5 ) ) ( "x" , I 10 )
+subst2 = subst ( Let "x" ( I 1 ) (Var "x" ) ) ( "y" , Add (Var "x" ) ( I 5 ) )
+subst3 = subst (Assign (L 2 ) (Add ( I 0 ) (Var "z" ) ) ) ("z" , B False )
+
 eval1 :: (Memory, Expr) -> (Memory, Expr)
 eval1 (mem, Var x) = (mem, Var x)
 eval1 (mem, I x) = (mem, I x)
@@ -140,6 +180,10 @@ eval1 (mem, Iszero (I e)) = if e == 0
                             then (mem, B True)
                             else (mem, B False)
 eval1 (mem, Iszero e) = error "No podemos determinar si un no-número es cero"
+eval1 (mem, Let id (I n) (Fn x e)) = (mem, (subst e (x, (I n))))
+eval1 (mem, Let id (B b) (Fn x e)) = (mem, (subst e (x, (B b))))
+eval1 (mem, Let id t (Fn x e)) = (memAux, (Let id nt (Fn x e)))
+  where (memAux, nt) = Practica3.eval1 (mem, t)
 eval1 (mem, Lt (I n) (I m)) = (mem, B (n < m))
 eval1 (mem, Lt e t) = (mem, Lt e t)
 eval1 (mem, Gt (I n) (I m)) = (mem, B (n > m))
@@ -202,9 +246,12 @@ evale :: Expr -> Expr
 evale (Var x) = (Var x)
 evale (I x) = (I x)
 evale (B x) = (B x)
-evale (e@(Add t p)) = evalInt e
-evale (e@(Mul t p)) = evalInt e
--- evale 
+evale e@(Add t p) = evalInt e
+evale e@(Mul t p) = evalInt e
+evale e@(Succ t) = evalInt e
+evale e@(Pred t) = evalInt e
+evale e@(Not t) = evalB e
+
 
 evalInt :: Expr -> Expr
 evalInt e = case evals ([(0, Void)], e) of
