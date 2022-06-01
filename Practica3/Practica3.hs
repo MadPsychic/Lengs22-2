@@ -68,11 +68,41 @@ listValue(x:xs) = [snd x] ++ listValue xs
 access ::  Address -> Memory -> Maybe Value
 access n xs = if distintos (listMemory xs)
   then error "Corrupted memory"
-  else if contains n (listMemory xs) then Just (eval1((listValue xs) !!(n-1)))
+  else if contains n (listMemory xs) then Just (Sintax.eval1 ((listValue xs) !!(n-1)))
        else Nothing
 
-
-
+eval1 :: (Memory , Expr) -> (Memory , Expr)
+eval1 (mem, Var x) = (mem, Var x)
+eval1 (mem, I x) = (mem, I x)
+eval1 (mem, B x) = (mem, B x)
+eval1 (mem, (Add (I n) (I m))) = (mem, I (n+m))
+eval1 (mem, (Add e t)) = (mem, Add e t)
+eval1 (mem, (Mul (I n) (I m))) = (mem, I (n*m))
+eval1 (mem, (Mul e t)) = (mem, Mul e t)
+eval1 (mem, Succ (I n)) = (mem, I (n+1))
+eval1 (mem, Succ e) = error "Sólo hay sucesores para números"
+eval1 (mem, Pred (I n)) = (mem, I (n-1))
+eval1 (mem, Pred e) = error "Sólo hay predecesores para números"
+eval1 (mem, Not (B b)) = (mem, B (not b))
+eval1 (mem, Not e) = error "El not sólo funciona con booleanos"
+eval1 (mem, (And (B b) (B o))) = (mem, B (b && o))
+eval1 (mem, (And e t)) = (mem, And e t)
+eval1 (mem, (Or (B b) (B o))) = (mem, B (b || o))
+eval1 (mem, (Or e t)) = (mem, Or e t)
+eval1 (mem, If (B False) e t) = (mem, t)
+eval1 (mem, If (B True) e t) = (mem, e)
+eval1 (mem, If c e t) = (mem, (If nc e t))
+  where (memAux, nc) = Practica3.eval1 (mem, c)
+eval1 (mem, Iszero (I e)) = if e == 0
+                            then (mem, B True)
+                            else (mem, B False)
+eval1 (mem, Iszero e) = error "No podemos determinar si un no-número es cero"
+eval1 (mem, Lt (I n) (I m)) = (mem, B (n < m))
+eval1 (mem, Lt e t) = (mem, Lt e t)
+eval1 (mem, Gt (I n) (I m)) = (mem, B (n > m))
+eval1 (mem, Gt e t) = (mem, Gt e t)
+eval1 (mem, Eq (I n) (I m)) = (mem, B (n == m))
+eval1 (mem, Eq e t) = (mem, Eq e t)
 
 -- *****************   Test access ***********************
 access1 = access 3 [ ]
