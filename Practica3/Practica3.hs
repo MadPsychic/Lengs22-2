@@ -10,6 +10,7 @@ type Value = Expr
 type Cell = (Address, Value)
 type Memory = [Cell]
 
+
 {--
  -- newAddress.Dada una memoria, genera una nueva direccion de memoria
  -- que no este contenida en esta.
@@ -123,3 +124,58 @@ update3 = update ( 0 , Fn "x" (Var "x" ) ) [ ( 0 , I 21 ) , ( 1 , Void ) , ( 2 ,
 update4 = update ( 2 , I 14 ) [ ( 0 , I 21 ) , ( 2 , Void ) , ( 2 , I 12 ) ]
 update5 = update ( 2 , I 14 ) [ ( 0 , I 13 ) , ( 1 , B True ) , ( 2 , I 25 ) ]
 
+
+
+
+
+
+{--
+-- subst. Extiende esta función para las nuevas expresiones.
+--}
+
+subst :: Expr -> Substitution -> Expr
+subst (Var x) (a,b) = if x == a
+                      then b
+                      else Var x
+subst (I x) (a,b) = if x == a 
+  then b
+  else I x
+subst (B x) (a,b) = if x == a 
+  then b
+  else B x
+subst (L x ) (a,b) = if x == a 
+  then b
+  else I x
+subst Add x y =  Add (subst x) (subst y)
+subst Mul x y = Mul (subst x) (subst y)
+subst Succ x = Succ (subst x)
+subst Pred x = Pred (subst x)
+subst And x y = And (subst x) (subst y)
+subst Or x y = Or(subst x) (subst y)
+subst Not x = Not(subst x)
+subst Iszero x = Iszero(subst x)
+subst Lt x y = Lt (subst x) (subst y)
+subst Gt x y = Gt (subst x) (subst y)
+subst Eq x y = Eq (subst x) (subst y)
+subst If x y z= If (subst x) (subst y) (subst z)
+subst Let x y z = Let x (subst y) (subst z)
+subst Fn x y = Fn x (subst y)
+subst App x y = App (subst x) (subst y)
+subst Alloc x = Alloc (subst x)
+subst Dref x = Dref (subst x)
+subst Assign x y = Assign (subst x) (subst y)
+subst Void = Void
+subst Seq x y= Seq (subst x) (subst y)
+subst While x y = While (subst x) (subst y)
+subst Abs x y = x (subst y)
+
+
+
+
+
+
+
+--- ******************** Test subst ************************
+subst1= subst (Add (Var "x" ) ( I 5 ) ) ( "x" , I 10 )
+subst2= subst ( Let "x" ( I 1 ) (Var "x" ) ) ( "y" , Add (Var "x" ) ( I 5 ) )
+subst3= subst (Assign (L 2 ) (Add ( I 0 ) (Var "z" ) ) ) ("z" , B False )
