@@ -66,13 +66,13 @@ listValue(x:xs) = [snd x] ++ listValue xs
 
 
 access ::  Address -> Memory -> Maybe Value
-access a xs 
---            |contains a (listMemory xs) = Just (eval1(Dref ((listValue xs) !!a))) 
-            |contains a (listMemory xs) = Just ((listValue xs) !!(a-1))
-            |distintos xs = error "Corrupted memory"
-            |otherwise = Nothing
+access n xs = if distintos (listMemory xs)
+  then error "Corrupted memory"
+  else if contains n (listMemory xs) then Just (eval1((listValue xs) !!(n-1)))
+       else Nothing
 
- -- let e =
+
+
 
 -- *****************   Test access ***********************
 access1 = access 3 [ ]
