@@ -251,7 +251,12 @@ evale e@(Mul t p) = evalInt e
 evale e@(Succ t) = evalInt e
 evale e@(Pred t) = evalInt e
 evale e@(Not t) = evalB e
-
+evale e@(And t p) = evalB e
+evale e@(Or t p) = evalB e
+evale e@(Iszero t) = evalB e
+evale e@(Lt t p) = evalB e
+evale e@(Gt t p) = evalB e
+evale e@(Eq t p) = evalB e
 
 evalInt :: Expr -> Expr
 evalInt e = case evals ([(0, Void)], e) of
@@ -262,3 +267,7 @@ evalB :: Expr -> Expr
 evalB e = case evals ([(0, Void)], e) of
             (mem, B b) -> B b
             _ -> error "Requerimos obtener un booleano"
+
+-- *****************   Test evale ***********************
+evale1 = evale (Add (Mul ( I 2 ) ( I 6 ) ) (B True) )
+evale2 = evale (Or (Eq (Add ( I 0 ) ( I 0 ) ) ( I 0 ) ) (Eq ( I 1 ) ( I 10 ) ) )
