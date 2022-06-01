@@ -76,6 +76,44 @@ access2 = access 1 [ ( 0 , B False ) , ( 2 , I 9 ) ]
 access3 = access 2 [ ( 0 , I 21 ) , ( 2 , I 12 ) , ( 1 , Void) ]
 access4 = access 2 [ ( 0 , I 21 ) , ( 0 , B False ) , ( 3 , Void) , ( 2 , I 12 ) ]
 
+{--
+ -- update. Dada una celda de memoria, actualiza el valor de esta misma en la memoria.
+ -- En caso de no existir debe devolver Nothing.
+ --}
+
+memoryStoreValue :: Cell -> Bool
+memoryStoreValue (a,b) =case b of
+  Var x -> False
+  I x -> False
+  B x  -> False
+  Fn x _ -> False
+  _ -> True
+
+-- replaceMemory :: Cell -> Memory -> Memory
+-- replaceMemory y (x:xs) = if (fst y) == (fst x)
+--  then y:replaceMemory y xs
+--  else x:replaceMemory y xs
+
+replaceMemory :: Cell -> Memory -> Memory
+replaceMemory y (x:xs) = if fst y == fst x
+                         then (fst x, snd y):xs
+                         else [x] ++ replaceMemory y xs
+
+
+update ::  Cell -> Memory -> Maybe Memory
+update ys xs
+  | distintos (listMemory xs) = error "Corrupted memory"
+  | memoryStoreValue ys = error "Memory can only store values"
+  | contains (fst ys) (listMemory xs) = Just (replaceMemory ys xs)
+  | otherwise = Nothing
+
+-- ******************* Test update +++++++++++++++++++++++
+update1 = update ( 3 , B True) [ ]
+update2 = update ( 0 , Succ (Var "x" ) ) [ ( 0 , B False ) , ( 2 , I 9 ) ]
+update3 = update ( 0 , Fn "x" (Var "x" ) ) [ ( 0 , I 21 ) , ( 1 , Void ) , ( 2 , I 12 ) ]
+update4 = update ( 2 , I 14 ) [ ( 0 , I 21 ) , ( 2 , Void ) , ( 2 , I 12 ) ]
+update5 = update ( 2 , I 14 ) [ ( 0 , I 13 ) , ( 1 , B True ) , ( 2 , I 25 ) ]
+
 eval1 :: (Memory, Expr) -> (Memory, Expr)
 eval1 (mem, Var x) = (mem, Var x)
 eval1 (mem, I x) = (mem, I x)
@@ -160,40 +198,7 @@ evals1 = evals ( [ ] , ( Let "x" (Add ( I 1 ) ( I 2 ) ) (Eq (Var "x" ) ( I 0 ) )
 evals2 = evals ( [ ] , (Add (Mul ( I 2 ) ( I 6 ) ) (B True) ) )
 evals3 = evals ( [ ] , Assign ( Alloc (B False ) ) ( Add ( I 1 ) ( I 9 ) ) )
 
-{--
- -- update. Dada una celda de memoria, actualiza el valor de esta misma en la memoria.
- -- En caso de no existir debe devolver Nothing.
- --}
-
-memoryStoreValue :: Cell -> Bool
-memoryStoreValue (a,b) =case b of
-  Var x -> False
-  I x -> False
-  B x  -> False
-  Fn x _ -> False
-  _ -> True
-
--- replaceMemory :: Cell -> Memory -> Memory
--- replaceMemory y (x:xs) = if (fst y) == (fst x)
---  then y:replaceMemory y xs
---  else x:replaceMemory y xs
-
-replaceMemory :: Cell -> Memory -> Memory
-replaceMemory y (x:xs) = if fst y == fst x
-                         then (fst x, snd y):xs
-                         else [x] ++ replaceMemory y xs
-
-
-update ::  Cell -> Memory -> Maybe Memory
-update ys xs
-  | distintos (listMemory xs) = error "Corrupted memory"
-  | memoryStoreValue ys = error "Memory can only store values"
-  | contains (fst ys) (listMemory xs) = Just (replaceMemory ys xs)
-  | otherwise = Nothing
-
--- ******************* Test update +++++++++++++++++++++++
-update1 = update ( 3 , B True) [ ]
-update2 = update ( 0 , Succ (Var "x" ) ) [ ( 0 , B False ) , ( 2 , I 9 ) ]
-update3 = update ( 0 , Fn "x" (Var "x" ) ) [ ( 0 , I 21 ) , ( 1 , Void ) , ( 2 , I 12 ) ]
-update4 = update ( 2 , I 14 ) [ ( 0 , I 21 ) , ( 2 , Void ) , ( 2 , I 12 ) ]
-update5 = update ( 2 , I 14 ) [ ( 0 , I 13 ) , ( 1 , B True ) , ( 2 , I 25 ) ]
+evale :: Expr -> Expr
+evale (Var x) = (Var x)
+evale (I x) = (I x)
+evale (B x) = (B x)
