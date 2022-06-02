@@ -115,7 +115,6 @@ update3 = update ( 0 , Fn "x" (Var "x" ) ) [ ( 0 , I 21 ) , ( 1 , Void ) , ( 2 ,
 update4 = update ( 2 , I 14 ) [ ( 0 , I 21 ) , ( 2 , Void ) , ( 2 , I 12 ) ]
 update5 = update ( 2 , I 14 ) [ ( 0 , I 13 ) , ( 1 , B True ) , ( 2 , I 25 ) ]
 
-
 {--
  -- frVars. Extiende esta función para las nuevas expresiones.
  --}
@@ -278,6 +277,14 @@ evals (mem, Iszero (I n)) = if n == 0
                             else (mem, B False)
 evals (mem, Iszero e) = Practica3.eval1 (memAux, f)
   where (memAux, f) = Practica3.eval1 (mem, e)
+evals (mem, Let id e (Fn x t)) = Practica3.eval1 (memAux, f)
+  where (mem1, f1) = Practica3.eval1 (mem, e)
+        (memAux, f) = Practica3.eval1 (mem1, Let id f1 (Fn x t))
+evals (mem, Eq e t) = Practica3.eval1 (memAux, f)
+  where (mem1, f1) = Practica3.eval1 (mem, e)
+        (mem2, f2) = Practica3.eval1 (mem, t)
+        (memAux, f) = Practica3.eval1 (mem2, Eq f1 f2)
+-- evals (mem, Assign e t) =
 
 -- *****************   Test evals ***********************
 evals1 = evals ( [ ] , ( Let "x" (Add ( I 1 ) ( I 2 ) ) (Fn "x" (Eq (Var "x" ) ( I 0 ) ) ) ) )
