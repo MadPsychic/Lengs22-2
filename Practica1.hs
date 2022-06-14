@@ -19,12 +19,10 @@ data EAB = Var Variable
          | Iszero EAB
          | Let EAB EAB
          | If EAB EAB EAB
-         | Abs Variable EAB 
-         | Gt EAB EAB 
-         | Lt EAB EAB 
+         | Abs Variable EAB
+         | Gt EAB EAB
+         | Lt EAB EAB
          | MatchNat EAB EAB Variable EAB deriving (Show, Eq)
-         
-         
 
 type Subst = (Variable,EAB)
 
@@ -121,9 +119,6 @@ evals (If t1 t2 t3) = eval1(If (evals(t1)) (evals(t2)) (evals(t3)))
 evals (Iszero e) = eval1(Iszero (evals(e)))
 evals (Let e t) = eval1(Let (evals(e)) (evals(t)))
 evals (Abs x e) = (Abs x e)
-evals (MatchNat e e1 x e2) = if (block e)
-                              then (MatchNat e e1 x e2)
-                              else evals (MatchNat (evals e) e1 x e2)
 
 isNum :: EAB -> Bool
 isNum (Num n) = True
@@ -185,10 +180,6 @@ eval (Let e (Abs x t)) = if fv (Let e (Abs x t)) /= []
                          then error "Variable libre en Let"
                          else eval(evals (Let e (Abs x t)))
 eval e = error "Expresión mal formada"
-eval (MatchNat e e1 y e2) = let x = evals (MatchNat e e1 y e2) in
-  if (isNat x || Boolean x)
-    then x
-  else error "MatchNat funciona con un número y dos expresiones EAB "
 
 -- ****************** Semantica Estatica ***********************
 data Type = TBool
@@ -282,8 +273,6 @@ tif (If a b c) d | tbool a (TBool) && tnum a d && tnum c d = True
                  | tbool a (TBool) && tor b d && tbool c d = True 
                  | tbool a TBool && tisz b d && tisz c d = True 
                  |otherwise = False 
-                 
-
 
 vt :: Ctx -> EAB -> Type -> Bool
 vt [] (Num e) t = tnum (Num e) t
@@ -299,19 +288,19 @@ vt ((a,b):xs) (And e1 (Var e2)) t | b == t && a == e2 = tnum e1 t
 vt ((a,b):xs) (Or (Var e1) e2) t | b == t && a == e1 = tnum e2 t
 vt ((a,b):xs) (Or e1 (Var e2)) t | b == t && a == e2 = tnum e1 t
 vt a e t = False
-vt l (MatchNat e e1 y e2) t = vt l e Nat &&
+vt l (MatchNat e e1 y e2) t = vt l e TNat &&
                           vt l e1 t &&
-                          vt ((y,Nat):l) e2 t
-vt l (Gt a b) t = t == Boolean &&
-                    vt l a Nat &&
-                    vt l b Nat
-vt l (Lt a b) t = t == Boolean &&
-                    vt l a Nat &&
-                    vt l b Nat
+                          vt ((y, TNat):l) e2 t
+vt l (Gt a b) t = t == TBool &&
+                    vt l a TNat &&
+                    vt l b TNat
+vt l (Lt a b) t = t == TBool &&
+                    vt l a TNat &&
+                    vt l b TNat
 
 evalt :: EAB -> EAB
 evalt (Var a) = error "Variable libre"
-evalt (Num a) = Num a 
+evalt (Num a) = Num a
 evalt (B a) = B a
 
 evalt (Sum (Num a) (Num b)) = Num (a+b)
@@ -326,7 +315,7 @@ evalt (Prod (Num a) (Num b)) = Num (a*b)
 evalt (Prod (Num a) (Var b)) = error "Existe una variable libre"
 evalt (Prod (Var a) (Num b)) = error "Existencia de variable libre"
 evalt (Prod (Num a)(B b)) = error "Error de tipo"
-evalt (Prod (B a)(Num b)) = error "Error de tipo" 
+evalt (Prod (B a)(Num b)) = error "Error de tipo"
 evalt (Prod (B a) (B b)) = error "No se puede realizar sumar"
 evalt (Prod a b) = error "Error de tipado"
 
@@ -359,7 +348,7 @@ evalt (Or (B True)(B False)) = B True
 evalt (Or (B False)(B False)) = B False  
 evalt (Or a b) = error "Error de tipado"
 
-evalt (Iszero (Num a)) | a == 0 = B True  
+evalt (Iszero (Num a)) | a == 0 = B True
                        | a /= 0 = B False
                        | otherwise = error "Error de tipado"
 
