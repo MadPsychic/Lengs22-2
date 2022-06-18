@@ -36,39 +36,25 @@ eval1 :: State -> State
 eval1 = error "implementar"
 
 -- *****************   Test eval1 ***********************
-eval1T0 = eval1 (E Empty (Add (I 2) (I 3)) )
-eval1T1 = eval1 E (S (AddFL (I 3)) Empty) (I 2)
+-- eval1T0 = eval1 (E Empty (Add (I 2) (I 3)) )
+-- eval1T1 = eval1 E (S (AddFL (I 3)) Empty) (I 2)
 
 evals :: State -> State
 evals = error "implementar"
 
 -- *****************   Test eval1 ***********************
-evals0 = evals (E Empty (Let "x" ( I 2 ) (Mul (Add ( I 1 ) ( V "x" ) ) (V "x" ) ) )
-evals1 = evals (E Empty (Let "x" (B True) ( I f (V "x" ) (V "x" ) (B False ) ) )
+-- evals0 = evals (E Empty (Let "x" ( I 2 ) (Mul (Add ( I 1 ) ( V "x" ) ) (V "x" ) ) ) )
+-- evals1 = evals (E Empty (Let "x" (B True) ( I f (V "x" ) (V "x" ) (B False ) ) ) )
 
-evale :: Expr -> Expr -- TODO quizá hay que dejarla así ?
-evale (Var x) = (Var x)
-evale (I x) = (I x)
-evale (B x) = (B x)
-evale e@(Add t p) = evalInt e
-evale e@(Mul t p) = evalInt e
-evale e@(Succ t) = evalInt e
-evale e@(Pred t) = evalInt e
-evale e@(Not t) = evalB e
-evale e@(And t p) = evalB e
-evale e@(Or t p) = evalB e
-evale e@(Iszero t) = evalB e
-evale e@(Lt t p) = evalB e
-evale e@(Gt t p) = evalB e
-evale e@(Eq t p) = evalB e
+evale :: Expr -> Expr
+evale = error "implementar"
 
 -- *****************   Test eval1 ***********************
 evale0 = evale (Add (Mul ( I 2 ) ( I 6 ) ) (B True) )
-evale1 = evale (Or (Eq (Add ( I 0 ) ( I 0 ) ) ( I 0 ) ) (Eq ( I 1 ) ( I 1 0 ) ) )
+-- evale1 = evale (Or (Eq (Add ( I 0 ) ( I 0 ) ) ( I 0 ) ) (Eq ( I 1 ) ( I 1 0 ) ) )
 
 -- ***************** Manejo de excepciones ***********************
-{--
- -- TODO frVars. Extiende esta función para las nuevas expresiones.
+{-- TODO frVars. Extiende esta función para las nuevas expresiones.
 frVars :: Expr -> [ Identifier ]
 frVars (Var v) = [v]
 frVars (I x) = []

@@ -30,7 +30,7 @@ type Substitution = (Identifier, Expr)
 --}
 
 
--- ****************** Semántica Dinámica ***********************
+{-- ****************** Semántica Dinámica ***********************
 
 eval1 :: Expr -> Expr
 eval1 (Var v) = (Var v)
@@ -66,3 +66,4 @@ eval1 (Iszero t) = (Iszero (eval1(t)))
 --eval1 (Let (B b) (Abs x y) (Abs e a)) = (Substitution e (x,(B b)))
 --eval1 (Let (I n) (Abs x y) (Abs e a)) = (Substitution e (x,(I n)))
 --eval1 (Let t1 t2 t3) = (Let (eval1(t1)) t2 t3)
+-}
