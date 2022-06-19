@@ -20,11 +20,42 @@ data Expr = Var Identifier | I Int | B Bool
           | Seq Expr Expr
           | While Expr Expr
           | Abs Identifier Expr
-          deriving (Show, Eq)
+          deriving (Eq)
+
+instance Show Expr where
+    show e = case e of
+        Var x -> show x
+        I x -> show x
+        B x -> show x
+        Add x y -> show x ++ " + " ++ show y
+        Mul x y -> show x ++ " * " ++ show y
+        Succ x -> show x
+        Pred x -> show x
+        And x y -> show x ++ " ∧ " ++show y
+        Or x y -> show x ++ " ∨ " ++show y
+        Not x -> "¬ " ++ show x
+        Iszero x -> show x
+        Lt x y -> show x ++ show y
+        Gt x y -> show x ++ show y
+        Eq x y -> show x ++ " = " ++ show y
+        If x y z -> " if " ++ show x ++ " them " ++ show y ++ " else " ++ show z
+        Let x y z -> "Let " ++ show x ++ " = " ++ show y ++ show z
+        Fn x y -> show x ++ show y
+        App x y -> show x ++ show y
+        L x -> show x
+        Alloc x -> show x
+        Dref x -> show x
+        Assign x y -> show x ++ " = " ++ show y
+        Void -> "Void"
+        Seq x y -> show x ++ show y
+        While x y -> show x ++ show y
+        Abs x y -> show x ++ show y
+
 
 
 
 type Substitution = (Identifier, Expr)
+
 {--
     Igual deben adecuar las funciones realizas en la practica 1 para ajustarse a esta sintaxis
 --}
