@@ -24,8 +24,30 @@ data Frame = AddFL Expr | AddFR Expr
             | AppFL Expr | AppFR Expr
             deriving (Eq)
 
--- TODO (1.) instance show Frame where
--- crear instancia de la clase Show
+instance Show Frame where
+    show e = case e of
+        AddFL x -> "Add( - , " ++ show x ++ " )"
+        AddFR x -> "Add( " ++ show x ++ " , - )"
+        MulFL x -> "Mul( - , " ++ show x ++ " )"
+        MulFR x -> "Mul( " ++ show x ++ " , - )"
+        SuccF -> "Succ( - )"
+        PredF -> "Pred( - )"
+        AndFL x -> "And( - , " ++ show x ++ " )"
+        AndFR x -> "And( " ++ show x ++ " , - )"
+        OrFL x -> "Or( - , " ++ show x ++ " )"
+        OrFR x -> "Or( " ++ show x ++ " , - )"
+        NotF -> "Not( - )"
+        IszeroF -> "IsZero( - )"
+        LtFL x -> "Lt( - , " ++ show x ++ " )"
+        LtFR x -> "Lt( " ++ show x ++ " , - )"
+        GtFL x -> "Gt( - , " ++ show x ++ " )"
+        GtFR x -> "Gt( " ++ show x ++ " , - )"
+        EqFL x -> "Eq( - , " ++ show x ++ " )"
+        EqFR x -> "Eq( " ++ show x ++ " , - )"
+        (IfF e t) -> "If( - , " ++ show e ++ show t ++ " )"
+     -- TODO LetF id t -> ?
+        AppFL x -> "App( - , " ++ show x ++ " )"
+        AppFR x -> "App( " ++ show x ++ " , - )"
 
 data Stack = Empty | S Frame Stack
 
@@ -44,14 +66,14 @@ evals = error "implementar"
 
 -- *****************   Test eval1 ***********************
 -- evals0 = evals (E Empty (Let "x" ( I 2 ) (Mul (Add ( I 1 ) ( V "x" ) ) (V "x" ) ) ) )
--- evals1 = evals (E Empty (Let "x" (B True) ( I f (V "x" ) (V "x" ) (B False ) ) ) )
+-- evals1 = evals (E Empty (Let "x" (B True) (If (Var "x") (Var "x") (B False) ) ) )
 
 evale :: Expr -> Expr
 evale = error "implementar"
 
 -- *****************   Test eval1 ***********************
 evale0 = evale (Add (Mul ( I 2 ) ( I 6 ) ) (B True) )
--- evale1 = evale (Or (Eq (Add ( I 0 ) ( I 0 ) ) ( I 0 ) ) (Eq ( I 1 ) ( I 1 0 ) ) )
+evale1 = evale (Or (Eq (Add ( I 0 ) ( I 0 ) ) ( I 0 ) ) (Eq ( I 1 ) (I 10) ) )
 
 -- ***************** Manejo de excepciones ***********************
 {-- TODO frVars. Extiende esta función para las nuevas expresiones.
