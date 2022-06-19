@@ -7,19 +7,23 @@ data Expr = Var Identifier | I Int | B Bool
           | Succ Expr | Pred Expr
           | And Expr Expr | Or Expr Expr
           | Not Expr | Iszero Expr
-          | Lt Expr Expr | Gt Expr Expr | Eq Expr Expr
+          | Lt Expr Expr -- Mayor que 
+          | Gt Expr Expr -- Menor que
+          | Eq Expr Expr -- Igual
           | If Expr Expr Expr
           | Let Identifier Expr Expr
-          | Fn Identifier Expr
           | App Expr Expr
           | L Int
+          | Void
+          | While Expr Expr
+-- ************** No las usaremos ***************
+
+          | Abs Identifier Expr
+          | Fn Identifier Expr
           | Alloc Expr
           | Dref Expr
           | Assign Expr Expr
-          | Void
           | Seq Expr Expr
-          | While Expr Expr
-          | Abs Identifier Expr
           deriving (Eq)
 
 instance Show Expr where
@@ -35,8 +39,8 @@ instance Show Expr where
         Or x y -> show x ++ " ∨ " ++show y
         Not x -> "¬ " ++ show x
         Iszero x -> show x
-        Lt x y -> show x ++ show y
-        Gt x y -> show x ++ show y
+        Lt x y -> show x ++ ">" ++ show y
+        Gt x y -> show x ++ "<" ++ show y
         Eq x y -> show x ++ " = " ++ show y
         If x y z -> " if " ++ show x ++ " them " ++ show y ++ " else " ++ show z
         Let x y z -> "Let " ++ show x ++ " = " ++ show y ++ show z
@@ -50,6 +54,7 @@ instance Show Expr where
         Seq x y -> show x ++ show y
         While x y -> show x ++ show y
         Abs x y -> show x ++ show y
+
 
 
 
