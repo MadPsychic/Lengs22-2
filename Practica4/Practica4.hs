@@ -15,6 +15,7 @@ type Cell = ( Address , Value )
 data State = E Stack Expr
            | R Stack Expr
            | P Stack Expr
+           deriving (Eq)
 
 instance Show State where
     show e = case e of
@@ -75,6 +76,7 @@ instance Show Frame where
 --Definicion de pila de marcos
 data Stack = Empty
            | S Frame Stack
+           deriving (Eq)
 
 instance Show Stack where
     show e = case e of
@@ -201,3 +203,19 @@ subst (Let x y z) e = Let x (subst y e) (subst z e)
 subst (Fn x y) e = Fn x (subst y e)
 subst (App x y) e = App (subst x e) (subst y e)
 
+estBloq :: State -> Bool
+estBloq e = (eval1 $ eval1 e) == e
+
+evals :: State -> State
+evals e = let t = eval1 e in
+            if estBloq t
+            then t
+            else evals t
+
+evale :: Expr -> Expr
+evale e = let s = evals $ E Empty e
+          in case s of
+               (R Empty t@(I n)) -> t
+               (R Empty t@(B b)) -> t
+               (R Empty t@(Fn x ex)) -> t
+               _ -> error "Error de tipos durante la ejecución"
