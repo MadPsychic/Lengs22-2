@@ -12,17 +12,15 @@ type Value = Expr
 
 type Cell = ( Address , Value )
 
-type Memory = [ Cell ]
-
-data State = E Stack Memory Expr
-           | R Stack Memory Expr
-           | P Stack Memory Expr
+data State = E Stack Expr
+           | R Stack Expr
+           | P Stack Expr
 
 instance Show State where
     show e = case e of
-        E x y z -> show x ++ show y ++ show z
-        R x y z -> show x ++ show y ++ show z
-        P x y z -> show x ++ show y ++ show z
+        E x y -> show x ++ " > " ++ show y
+        R x y -> show x ++ " < " ++ show y
+        P x y -> show x ++ " << " ++ show y
 
 -- Definicion de marcos
 data Frame = AddFL Expr | AddFR Expr
@@ -88,70 +86,74 @@ eval1. Re implementa esta función para que dado un estado, devuelva un paso de 
 esdecir,eval1s=s’siysólosis→k s’
 --}
 --- VALUES
-eval1 (E s m e@(I n)) = R s m e
-eval1 (E s m e@(B b)) = R s m e
-eval1 (E s m e@(Fn x exp)) = R s m e
+eval1 (E s e@(I n)) = R s e
+eval1 (E s e@(B b)) = R s e
+eval1 (E s e@(Fn x exp)) = R s e
 
 --- ADD
-eval1 (E s m (Add e1 e2)) = E (S (AddFL e2) s) m e1
-eval1 (R (S (AddFL e2) s) m v) = E (S (AddFR v) s) m e2
-eval1 (R (S (AddFR (I v1)) s) m (I v2)) = R s m (I (v1+v2))
+eval1 (E s (Add e1 e2)) = E (S (AddFL e2) s) e1
+eval1 (R (S (AddFL e2) s) v) = E (S (AddFR v) s) e2
+eval1 (R (S (AddFR (I v1)) s) (I v2)) = R s (I (v1+v2))
 
 --- MUL
-eval1 (E s m (Mul e1 e2)) = E (S (MulFL e2) s) m e1
-eval1 (R (S (MulFL e2) s) m v) = E (S (MulFR v) s) m e2
-eval1 (R (S (MulFR (I v1)) s) m (I v2)) = R s m (I (v1+v2))
+eval1 (E s (Mul e1 e2)) = E (S (MulFL e2) s) e1
+eval1 (R (S (MulFL e2) s) v) = E (S (MulFR v) s) e2
+eval1 (R (S (MulFR (I v1)) s) (I v2)) = R s (I (v1*v2))
 
 --- SUCC
-eval1 (E s m (Succ e)) = E (S SuccF s) m e
-eval1 (R (S SuccF s) m (I v)) = R s m (I (v+1))
+eval1 (E s (Succ e)) = E (S SuccF s) e
+eval1 (R (S SuccF s) (I v)) = R s (I (v+1))
 
 --PRED
-eval1 (E s m (Pred e))= E (S PredF s) m e
-eval1 (R (S PredF s) m (I v)) = R s m (I (1-v))
+eval1 (E s (Pred e)) = E (S PredF s) e
+eval1 (R (S PredF s) (I v)) = R s (I (v-1))
 
 --AND
-eval1 (E s m (And e1 e2)) = E (S (AndFL e2) s) m e1
-eval1 (R (S (AndFL e2) s) m v) = E (S (AndFR v) s) m e2
-eval1 (R (S (AndFR (B v1)) s) m (B v2)) = R s m (B (v1 && v2))
+eval1 (E s (And e1 e2)) = E (S (AndFL e2) s) e1
+eval1 (R (S (AndFL e2) s) v) = E (S (AndFR v) s) e2
+eval1 (R (S (AndFR (B v1)) s) (B v2)) = R s (B (v1 && v2))
 
 --OR
-eval1 (E s m (Or e1 e2)) = E (S (OrFL e2) s) m e1
-eval1 (R (S (OrFL e2) s) m v) = E (S (OrFR v) s) m e2
-eval1 (R (S (OrFR (B v1)) s) m (B v2)) = R s m (B (v1 || v2))
+eval1 (E s (Or e1 e2)) = E (S (OrFL e2) s) e1
+eval1 (R (S (OrFL e2) s) v) = E (S (OrFR v) s) e2
+eval1 (R (S (OrFR (B v1)) s) (B v2)) = R s (B (v1 || v2))
 
 --- NEG
-eval1 (E s m (Not e)) = E (S NotF s) m e
-eval1 (R (S NotF s) m (B v)) = R s m (B (not v))
+eval1 (E s (Not e)) = E (S NotF s) e
+eval1 (R (S NotF s) (B v)) = R s (B (not v))
 
 --- ISZERO
-eval1 (E s m (Iszero e)) = E (S IszeroF s) m e
-eval1 (R (S IszeroF s) m (I v)) = R s m (B (0 == v))
+eval1 (E s (Iszero e)) = E (S IszeroF s) e
+eval1 (R (S IszeroF s) (I v)) = R s (B (0 == v))
 
 --LT
-eval1 (E s m (Lt e1 e2)) = E (S (LtFL e2) s) m e1
-eval1 (R (S (LtFL e2) s) m v) = E (S (LtFR v) s) m e2
-eval1 (R (S (LtFR (I v1)) s) m (I v2)) = R s m (B (v1 > v2))
+eval1 (E s (Lt e1 e2)) = E (S (LtFL e2) s) e1
+eval1 (R (S (LtFL e2) s) v) = E (S (LtFR v) s) e2
+eval1 (R (S (LtFR (I v1)) s) (I v2)) = R s (B (v1 < v2))
 
 --GT
-eval1 (E s m (Gt e1 e2)) = E (S (GtFL e2) s) m e1
-eval1 (R (S (GtFL e2) s) m v) = E (S (GtFR v) s) m e2
-eval1 (R (S (GtFR (Var v1)) s) m (Var v2)) = R s m (Var (v1))
+eval1 (E s (Gt e1 e2)) = E (S (GtFL e2) s) e1
+eval1 (R (S (GtFL e2) s) v) = E (S (GtFR v) s) e2
+eval1 (R (S (GtFR (I v1)) s) (I v2)) = R s (B (v1 > v2))
 
 --EQ
-eval1 (E s m (Eq e1 e2)) = E (S (EqFL e2) s) m e1
-eval1 (R (S (EqFL e2) s) m v) = E (S (EqFR v) s) m e2
-eval1 (R (S (EqFR (Var v1)) s) m (Var v2)) = R s m (B (v1 == v2))
+eval1 (E s (Eq e1 e2)) = E (S (EqFL e2) s) e1
+eval1 (R (S (EqFL e2) s) v) = E (S (EqFR v) s) e2
+eval1 (R (S (EqFR (I v1)) s) (I v2)) = R s (B (v1 == v2))
 
 --APP
-eval1 (E s m (App e1 e2)) = E (S (AppFL e2) s) m e1
-eval1 (R (S (AppFL e2) s) m v) = E (S (AppFR v) s) m e2
-eval1 (R (S (AppFR (Var v1)) s) m (Var v2)) = R s m (Var (v2)) -- Este hay que corregirlo
+eval1 (E s (App e1 e2)) = E (S (AddFL e2) s) e1
+eval1 (R (S (AppFL e2) s) v) =  E (S (AppFR v) s) e2
+eval1 (R (S (AddFR (Fn x y)) s) v) = case v of
+                                       (I n) -> R s (subst y (x, v))
+                                       (B b) -> R s (subst y (x, v))
+                                       (Fn x e) -> R s (subst y (x, v))
 
 -- IF
-
---- WHILE
-eval1 (E s m w@(While f e)) = E s m (If f (Seq e w) Void)
+eval1 (E s (If e1 e2 e3)) = E (S (IfF e2 e3) s) e1
+eval1 (R (S (IfF e2 e3) s) v) = case v of
+                                  (B True) -> E s e2
+                                  (B False) -> E s e3
 
 --
 frVars :: Expr -> [Identifier]
@@ -174,8 +176,6 @@ frVars (If x y z) = frVars x ++ frVars y ++ frVars z
 frVars (Let x y z) = frVars y ++ frVars z
 frVars (Fn x y) = (frVars y)
 frVars (App x y) = frVars x ++ frVars y
-frVars Void = []
-frVars (While x y) = (frVars x) ++ (frVars y)
 
 --
 subst :: Expr -> Substitution -> Expr
@@ -200,6 +200,4 @@ subst (If x y z) e = If (subst x e) (subst y e) (subst z e)
 subst (Let x y z) e = Let x (subst y e) (subst z e)
 subst (Fn x y) e = Fn x (subst y e)
 subst (App x y) e = App (subst x e) (subst y e)
-subst Void e = Void
-subst (While x y) e = While (subst x e) (subst y e)
 
