@@ -40,6 +40,8 @@ data Frame = AddFL Expr | AddFR Expr
             | DrefF
             | AssignFL Expr | AssignFR Expr
             | SeqF Expr
+            | RaiseF
+            | HandleF Identifier Expr
             deriving (Eq)
 
 instance Show Frame where
@@ -71,6 +73,8 @@ instance Show Frame where
         AssignFL x -> "Assing( - , " ++ show x ++" )"
         AssignFR x -> "Assing( " ++ show x ++" , - )"
         SeqF x -> "Seq("++ show x ++ " )"
+        RaiseF -> "Raise ( - )"
+        (HandleF e t) -> "Handle ( - , " ++ show e ++ "." ++ show t ++ " )"
 
 
 --Definicion de pila de marcos
@@ -157,7 +161,31 @@ eval1 (R (S (IfF e2 e3) s) v) = case v of
                                   (B True) -> E s e2
                                   (B False) -> E s e3
 
---
+-- RAISE
+eval1 (E s (Raise e)) = E (S RaiseF s) e
+eval1 (R (S RaiseF s) v) = case v of
+                             (I n) -> P s (Raise v)
+                             (B b) -> P s (Raise v)
+                             (Fn x e) -> P s (Raise v)
+
+-- HANDLE
+eval1 (E s (Handle e1 id e2)) = E (S (HandleF id e2) s) e1
+eval1 (R (S (HandleF x e2) s) v) = case v of
+                                     (I n) -> R s v
+                                     (B b) -> R s v
+                                     (Fn x e) -> R s v
+eval1 (P (S (HandleF id e2) s) (Raise v)) = E s (subst e2 (id, v))
+eval1 (P (S f s) (Raise v)) = P s (Raise v)
+eval1 (R Empty e) = (E Empty e)
+
+-- BLOQUEADO
+eval1 e = e
+
+-- ********* Test eval1 *********
+eval1T0 = eval1 (E Empty (Add (I 2) (I 3)))
+eval1T1 = eval1 (E (S (AddFL (I 3)) Empty) (I 2))
+eval1T2 = eval1 (P (S (HandleF "x" (Var "x")) Empty) (Raise (B False)))
+
 frVars :: Expr -> [Identifier]
 frVars (Var x) = [x]
 frVars (I x) = []
@@ -176,10 +204,11 @@ frVars (Gt x y) = (frVars x)++ (frVars y)
 frVars (Eq x y) = (frVars x) ++ (frVars y)
 frVars (If x y z) = frVars x ++ frVars y ++ frVars z
 frVars (Let x y z) = frVars y ++ frVars z
-frVars (Fn x y) = (frVars y)
+frVars (Fn x y) = filter (/= x) (frVars y)
 frVars (App x y) = frVars x ++ frVars y
+frVars (Raise x) = frVars x
+frVars (Handle x y z) = filter (/= y) (frVars x ++ frVars z)
 
---
 subst :: Expr -> Substitution -> Expr
 subst (Var x) (a, b) = if x == a
                        then b
@@ -202,6 +231,10 @@ subst (If x y z) e = If (subst x e) (subst y e) (subst z e)
 subst (Let x y z) e = Let x (subst y e) (subst z e)
 subst (Fn x y) e = Fn x (subst y e)
 subst (App x y) e = App (subst x e) (subst y e)
+subst (Raise x) s = Raise $ subst x s
+subst (Handle x y z) (a, b) = if (y == a || elem y (frVars b))
+                              then error "subst incorrecta"
+                              else (Handle (subst x (a, b)) y (subst z (a, b)))
 
 estBloq :: State -> Bool
 estBloq e = (eval1 $ eval1 e) == e
@@ -212,6 +245,10 @@ evals e = let t = eval1 e in
             then t
             else evals t
 
+-- ********* Test evals *********
+evals0 = evals (E Empty (Let "x" (B True) (If (Var "x" ) (Var "x" ) (B False ) ) ) )
+evals1 = evals (E Empty (Let "x" ( I 2 ) (Mul (Add ( I 1 ) ( Var "x" ) ) (Var "x" ) ) ) )
+
 evale :: Expr -> Expr
 evale e = let s = evals $ E Empty e
           in case s of
@@ -219,3 +256,7 @@ evale e = let s = evals $ E Empty e
                (R Empty t@(B b)) -> t
                (R Empty t@(Fn x ex)) -> t
                _ -> error "Error de tipos durante la ejecución"
+
+-- ********* Test evals *********
+evale0 = evale (Add (Mul ( I 2 ) ( I 6 ) ) (B True) )
+evale1 = evale (Or (Eq (Add ( I 0 ) ( I 0 ) ) ( I 0 ) ) (Eq ( I 1 ) ( I 10 ) ) )
