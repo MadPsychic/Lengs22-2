@@ -1,4 +1,4 @@
-module Practica4 where 
+module Practica4 where
 
 import Sintax
 import Data.Bool
@@ -19,25 +19,23 @@ data State = E Stack Memory Expr
            | P Stack Memory Expr
 
 instance Show State where
-    show e = case e of 
+    show e = case e of
         E x y z -> show x ++ show y ++ show z
         R x y z -> show x ++ show y ++ show z
         P x y z -> show x ++ show y ++ show z
-
-
 
 -- Definicion de marcos
 data Frame = AddFL Expr | AddFR Expr
             | MulFL Expr | MulFR Expr
             | SuccF | PredF
-            | AndFL Expr | AndFR Expr 
+            | AndFL Expr | AndFR Expr
             | OrFL Expr | OrFR Expr
             | NotF | IszeroF
             | LtFL Expr | LtFR Expr
-            | GtFL Expr | GtFR Expr 
+            | GtFL Expr | GtFR Expr
             | EqFL Expr | EqFR Expr
             | IfF Expr Expr
-            | LetM Identifier Expr
+            | LetF Identifier Expr
             | AppFL Expr | AppFR Expr
             | AllocF
             | DrefF
@@ -56,7 +54,7 @@ instance Show Frame where
         AndFL x -> "And( - , " ++ show x ++ " )"
         AndFR x -> "And( " ++ show x ++ " , - )"
         OrFL x -> "Or( - , " ++ show x ++ " )"
-        OrFR x -> "Or( " ++ show x ++ " , - )"       
+        OrFR x -> "Or( " ++ show x ++ " , - )"
         NotF -> "Not( - )"
         IszeroF -> "IsZero( - )"
         LtFL x -> "Lt( - , " ++ show x ++ " )"
@@ -66,7 +64,7 @@ instance Show Frame where
         EqFL x -> "Eq( - , " ++ show x ++ " )"
         EqFR x -> "Eq( " ++ show x ++ " , - )"
         (IfF e t) -> "If( - , " ++ show e ++ show t ++ " )"
-     -- TODO LetF id t -> ?
+        (LetF e t) -> "Let(" ++ show e ++ ", _, " ++ show t ++ ")"
         AppFL x -> "App( - , " ++ show x ++ " )"
         AppFR x -> "App( " ++ show x ++ " , - )"
         AllocF  -> "Alloc( - )"
@@ -80,18 +78,15 @@ instance Show Frame where
 data Stack = Empty
            | S Frame Stack
 
-instance Show Stack where 
-    show e = case e of 
+instance Show Stack where
+    show e = case e of
         Empty -> "[ ]"
         S x y -> show x ++ show y
 
-
-
 {--
-eval1. Re implementa esta función para que dado un estado, devuelva un paso de transicion, 
+eval1. Re implementa esta función para que dado un estado, devuelva un paso de transicion,
 esdecir,eval1s=s’siysólosis→k s’
 --}
-
 --- VALUES
 eval1 (E s m e@(I n)) = R s m e
 eval1 (E s m e@(B b)) = R s m e
@@ -136,7 +131,7 @@ eval1 (R (S IszeroF s) m (I v)) = R s m (B (0 == v))
 --LT
 eval1 (E s m (Lt e1 e2)) = E (S (LtFL e2) s) m e1
 eval1 (R (S (LtFL e2) s) m v) = E (S (LtFR v) s) m e2
-eval1 (R (S (LtFR (I v1)) s) m (I v2)) = R s m (I (v1 > v2))
+eval1 (R (S (LtFR (I v1)) s) m (I v2)) = R s m (B (v1 > v2))
 
 --GT
 eval1 (E s m (Gt e1 e2)) = E (S (GtFL e2) s) m e1
@@ -158,5 +153,53 @@ eval1 (R (S (AppFR (Var v1)) s) m (Var v2)) = R s m (Var (v2)) -- Este hay que c
 --- WHILE
 eval1 (E s m w@(While f e)) = E s m (If f (Seq e w) Void)
 
+--
+frVars :: Expr -> [Identifier]
+frVars (Var x) = [x]
+frVars (I x) = []
+frVars (B x)  = []
+frVars (L x) = []
+frVars (Add x y) = frVars x ++ frVars y
+frVars (Mul x y) = frVars x ++ frVars y
+frVars (Succ x) = frVars x
+frVars (Pred x) = frVars x
+frVars (And x y) = frVars x ++ frVars y
+frVars (Or x y) = frVars x ++ frVars y
+frVars (Not x) = frVars x
+frVars (Iszero x) = frVars x
+frVars (Lt x y) = (frVars x) ++ (frVars y)
+frVars (Gt x y) = (frVars x)++ (frVars y)
+frVars (Eq x y) = (frVars x) ++ (frVars y)
+frVars (If x y z) = frVars x ++ frVars y ++ frVars z
+frVars (Let x y z) = frVars y ++ frVars z
+frVars (Fn x y) = (frVars y)
+frVars (App x y) = frVars x ++ frVars y
+frVars Void = []
+frVars (While x y) = (frVars x) ++ (frVars y)
 
+--
+subst :: Expr -> Substitution -> Expr
+subst (Var x) (a, b) = if x == a
+                       then b
+                       else Var x
+subst (I x) _ = I x
+subst (B x) _ = B x
+subst (L x ) _ = L x
+subst (Add x y) e =  Add (subst x e) (subst y e)
+subst (Mul x y) e = Mul (subst x e) (subst y e)
+subst (Succ x) e = Succ (subst x e)
+subst (Pred x) e = Pred (subst x e)
+subst (And x y) e = And (subst x e) (subst y e)
+subst (Or x y) e = Or(subst x e) (subst y e)
+subst (Not x) e = Not(subst x e)
+subst (Iszero x) e = Iszero(subst x e)
+subst (Lt x y) e = Lt (subst x e) (subst y e)
+subst (Gt x y) e = Gt (subst x e) (subst y e)
+subst (Eq x y) e = Eq (subst x e) (subst y e)
+subst (If x y z) e = If (subst x e) (subst y e) (subst z e)
+subst (Let x y z) e = Let x (subst y e) (subst z e)
+subst (Fn x y) e = Fn x (subst y e)
+subst (App x y) e = App (subst x e) (subst y e)
+subst Void e = Void
+subst (While x y) e = While (subst x e) (subst y e)
 
